@@ -1,0 +1,11 @@
+{
+  "name": "task_manager_api_sql_without_components",
+  "version": "1.0.0",
+  "description": "Else API for task manager build on sql (mysql), but with another architechture",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ander",
+  "license": "ISC"
+}
