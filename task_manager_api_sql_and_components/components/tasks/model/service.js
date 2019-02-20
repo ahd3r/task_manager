@@ -1,3 +1,5 @@
+const middleWare = require('../../../utils/middleware');
+
 class Service{
   pagination(page,inEachPage){
     let amount;
@@ -11,6 +13,9 @@ class Service{
       last=false;
       return {amount,last}
     }
+  }
+  checkStatus(idUser){
+    return middleWare.checkStatus(idUser);
   }
 }
 

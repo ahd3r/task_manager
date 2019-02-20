@@ -6,8 +6,16 @@ const forTwoMethod = require('../../utils/middleware');
 
 class Controler{
   backUsers(req,res,next){
-    repository.getUsers().then(data=>{
-      res.send(data[0]);
+    if(!validationResult(req).isEmpty()){
+      return res.send({error:validationResult(req).array()});
+    }
+    const forPagination = service.validPagination(req.params.page,req.params.amount);
+    repository.getUsers(forPagination.last,forPagination.amount).then(data=>{
+      repository.getCountOfAllUsers().then(totalyCount=>{
+        res.send([totalyCount[0][0],...data[0]]);
+      }).catch(err=>{
+        res.send({err});
+      });
     }).catch(err=>{
       res.send({err});
     });
@@ -55,23 +63,31 @@ class Controler{
       return res.send({error:validationResult(req).array()});
     }
     if(req.body.permission){
+      if(!req.headers.iduser){
+        return res.send({err:'You must be authorized admin'});
+      }
       if(service.checkStatus(repository,req.headers.iduser)){
         return res.send({err:service.checkStatus(repository,req.headers.iduser)});
       }
     }
     do {
-      req.body.confToken=forTwoMethod.validConfToken(service.createToken());
-      if(req.body.confToken.err){
-        return res.send({err:req.body.confToken.err});
-      }
-    } while (req.body.confToken==='using');
+      req.body.tokenConfirm=service.createToken();
+      forTwoMethod.validConfToken(req.body.tokenConfirm).then(data=>{
+        if(data[0].length!==0){
+          req.body.tokenConfirm='using';
+        }
+      }).catch(err=>{
+        return res.send({err});
+      });
+    } while (req.body.tokenConfirm==='using');
     req.body.password=service.hashPassword(req.body.password);
     repository.createAccount(req.body).then(done=>{
       repository.getUserByEmail(req.body.email).then(data=>{
-        if(!req.body.htmlLetter){
-          return res.send({err:'Fill htmlLetter in body for send it to mail, and do not forget about link to confirm account'});
-        }
-        service.sendingMail(req.body.email,'Confirm account',req.body.htmlLetter);
+        service.sendingMail(req.body.email,'Confirm account',`
+          <h1>This is confirm letter</h1>
+          <p>For confirm it go to this link in postman with patch request:
+          http://localhost:3000/user/confirm/${data[0][0].id_user}</p>
+        `);
         res.send(data[0]);
       }).catch(err=>{
         res.send({err});
@@ -98,7 +114,7 @@ class Controler{
     if(!validationResult(req).isEmpty()){
       return res.send({error:validationResult(req).array()});
     }
-    repository.takeStatus(req.headers.iduser).then(data=>{
+    repository.takeStatus(req.params.idUser).then(data=>{
       res.send(data[0]);
     }).catch(err=>{
       res.send({err});
@@ -169,17 +185,15 @@ class Controler{
       return res.send({error:'Must be data for update'});
     }
     if(req.body.email){
-      if(!/@/.test(req.body.email)){
-        return res.send('Write valid email');
-      }
+      return res.send('Change email is not posible');
     }
     if(req.body.username){
       if(req.body.username.length<2){
         return res.send({error:'Too short username'});
       }
     }
-    if(req.body.avatart){
-      if(/^0/.test(req.body.avatart) || isNaN(Number(req.body.avatart))){
+    if(req.body.avatar){
+      if(/^0/.test(req.body.avatar) || isNaN(Number(req.body.avatar))){
         return res.send({error:'Wrong avatar'});
       }
     }
@@ -187,54 +201,83 @@ class Controler{
       if(/\D/.test(req.body.permission)){
         return res.send({err:'It must be a number'});
       }
+      if(service.checkStatus(repository,req.headers.iduser)){
+        return res.send({err:service.checkStatus(repository,req.headers.iduser)});
+      }
     }
     if(req.body.tokenReset===0){
-      req.body.tokenReset=null
-    }else if(req.body.tokenReset===1){
+      req.body.tokenReset=null;
+    }else if(req.body.tokenReset&&req.body.tokenReset===1){
       do {
-        req.body.tokenReset=forTwoMethod.validResetToken(service.createToken());
-        if(req.body.tokenReset.err){
-          return res.send({err:req.body.tokenReset.err});
-        }
+        req.body.tokenReset=service.createToken();
+        forTwoMethod.validResetToken(req.body.tokenReset).then(data=>{
+          if(data[0].length!==0){
+            req.body.tokenReset='using';
+          }
+        }).catch(err=>{
+          return res.send({err});
+        });
       } while (req.body.tokenReset==='using');
       doWeNeedSendEmail=true;
+    }else if(req.body.tokenReset){
+      return res.send({err:'tokenReset must be either 1 or 0'});
     }
-    repository.editUser(req.body,req.params.idUser).then(done=>{
-      repository.getUser(req.params.idUser).then(data=>{
-        if(doWeNeedSendEmail){
-          if(req.body.email){
-            service.sendingMail(req.body.email,'Reset password',req.body.htmlLetter);
-          }else{
-            repository.getUser(req.headers.iduser).then(data=>{
-              if(data[0].length===0){
-                return res.send({err:'This user does not exist'});
-              }
-              if(!req.body.htmlLetter){
-                return res.send({err:'Fill htmlLetter in body for send it to mail, and do not forget about link to reset password'});
-              }
-              service.sendingMail(data[0][0].email,'Reset password',req.body.htmlLetter);
-            }).catch(err=>{
-              res.send({err});
-            });
+    const editIt=()=>{
+      repository.editUser(req.body,req.params.idUser).then(done=>{
+        repository.getUser(req.params.idUser).then(data=>{
+          if(doWeNeedSendEmail){
+            service.sendingMail(data[0][0].email,'Reset password',`
+              <h1>This is letter for reset password</h1>
+              <p>For reset password go to this link http://localhost:3000/users/reset/password/${data[0][0].id_user} in postman 
+              with patch request and do not forget to past new password in body in password line</p>
+            `);
           }
-        }
-        res.send(data[0]);
+          res.send(data[0]);
+        }).catch(err=>{
+          res.send({err});
+        })
       }).catch(err=>{
         res.send({err});
-      })
-    }).catch(err=>{
-      res.send({err});
-    });
+      });
+    };
+    if(req.headers.iduser!==req.params.idUser){
+      repository.takeStatus(req.headers.iduser).then(data=>{
+        if(data[0][0].permission!=='admin'){
+          return res.send({err:'You must be an admin'});
+        }else{
+          editIt();
+        }
+      }).catch(err=>{
+        res.send({err});
+      });
+    }else{
+      editIt();
+    }
   }
   deleteUser(req,res,next){
     if(!validationResult(req).isEmpty()){
       return res.send({error:validationResult(req).array()});
     }
-    repository.deleteUser(req.params.idUser).then(done=>{
-      res.send({done});
-    }).catch(err=>{
-      res.send({err});
-    });
+    const deleteIt = ()=>{
+      repository.deleteUser(req.params.idUser).then(done=>{
+        res.send({done});
+      }).catch(err=>{
+        res.send({err});
+      });
+    };
+    if(req.headers.iduser!==req.params.idUser){
+      repository.takeStatus(req.headers.iduser).then(data=>{
+        if(data[0][0].permission!=='admin'){
+          return res.send({err:'You must be an admin'});
+        }else{
+          deleteIt();
+        }
+      }).catch(err=>{
+        return res.send({err});
+      });
+    }else{
+      deleteIt();
+    }
   }
 }
 

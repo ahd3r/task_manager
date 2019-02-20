@@ -8,8 +8,11 @@ class Repository{
       return db.execute(`INSERT users(username,password,email,confirm_token) VALUES ('${newDataForAccount.username}','${newDataForAccount.password}','${newDataForAccount.email}','${newDataForAccount.tokenConfirm}')`);
     }
   }
-  getUsers(){
-    return db.execute('SELECT * FROM users');
+  getUsers(last,amount){
+    return db.execute(`SELECT * FROM users LIMIT ${last},${amount}`);
+  }
+  getCountOfAllUsers(){
+    return db.execute('SELECT COUNT(*) AS total FROM users');
   }
   getUserByEmail(email){
     return db.execute(`SELECT * FROM users WHERE email='${email}'`);
@@ -18,10 +21,10 @@ class Repository{
     return db.execute(`SELECT * FROM users WHERE id_user=${idUser}`);
   }
   getUserByConfToken(token){
-    return db.execute(`SELECT * FROM users WHERE token_confirm='${token}'`);
+    return db.execute(`SELECT * FROM users WHERE confirm_token='${token}'`);
   }
   getUserByResetToken(token){
-    return db.execute(`SELECT * FROM users WHERE token_reset='${token}'`);
+    return db.execute(`SELECT * FROM users WHERE reset_token='${token}'`);
   }
   addStatus(newStatus){
     return db.execute(`INSERT status_perm(permission) VALUES ('${newStatus.call}')`);

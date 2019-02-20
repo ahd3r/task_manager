@@ -5,26 +5,28 @@ const tasksRepository = require('../components/tasks/model/repository');
 
 class ValidationInMiddleWare{
   validConfToken(token){
-    userRepository.getUserByConfToken(token).then(data=>{
-      if(data[0].length!==0){
-        return token;
-      }else{
-        return 'using'
-      }
-    }).catch(err=>{
-      return {err};
-    });
+    return userRepository.getUserByConfToken(token);
+    // .then(data=>{
+    //   if(data[0].length===0){
+    //     return token;
+    //   }else{
+    //     return 'using'
+    //   }
+    // }).catch(err=>{
+    //   return {err};
+    // });
   }
   validResetToken(token){
-    userRepository.getUserByResetToken(token).then(data=>{
-      if(data[0].length!==0){
-        return token;
-      }else{
-        return 'using'
-      }
-    }).catch(err=>{
-      return {err}
-    })
+    return userRepository.getUserByResetToken(token);
+    // .then(data=>{
+    //   if(data[0].length!==0){
+    //     return token;
+    //   }else{
+    //     return 'using'
+    //   }
+    // }).catch(err=>{
+    //   return {err}
+    // })
   }
   checkExistingAccount(req,res,next){
     userRepository.getUser(req.params.idUser).then(data=>{
@@ -39,6 +41,7 @@ class ValidationInMiddleWare{
   }
   isUser(req,res,next){
     if(req.headers.iduser){
+      req.headers.iduser=parseInt(req.headers.iduser);
       userRepository.takeStatus(req.headers.iduser).then(data=>{
         if(data[0][0].permission==='user'){
           next();
@@ -54,6 +57,7 @@ class ValidationInMiddleWare{
   }
   isAdmin(req,res,next){
     if(req.headers.iduser){
+      req.headers.iduser=parseInt(req.headers.iduser);
       userRepository.takeStatus(req.headers.iduser).then(data=>{
         if(data[0][0].permission==='admin'){
           next();
@@ -69,6 +73,7 @@ class ValidationInMiddleWare{
   }
   isPaid(req,res,next){
     if(req.headers.iduser){
+      req.headers.iduser=parseInt(req.headers.iduser);
       tasksRepository.getUserTasks(req.headers.iduser).then(data=>{
         if(data[0].length>5){
           userRepository.takeStatus(req.headers.iduser).then(data=>{
@@ -117,7 +122,7 @@ class ValidationInMiddleWare{
             if(data[0].length===0){
               return res.send({err:'This user does not exist',msg:'Recreate jwt in auth (Reauth)'});
             }
-            if(data[0][0].id_user===req.headers.iduser){
+            if(data[0][0].id_user===parseInt(req.headers.iduser)){
               next();
             }else{
               res.send({err:'jwt are not mutch to iduser in header', msg:'Recreate jwt in auth (Reauth)'});
@@ -130,6 +135,20 @@ class ValidationInMiddleWare{
     }else{
       res.send({err:'Render auth page'});
     }
+  }
+  checkStatus(idUser){
+    return userRepository.takeStatus(idUser);
+  }
+  relocatedForData(req,res,next){
+    userRepository.takeStatus(req.headers.iduser).then(data=>{
+      if(data[0][0].permission==='admin'){
+        next();
+      }else{
+        next('route');
+      }
+    }).catch(err=>{
+      res.send({err});
+    });
   }
 }
 

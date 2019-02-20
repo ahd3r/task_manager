@@ -7,10 +7,15 @@ class Controler{
   backTasks(req,res,next){
     const forPagination=service.pagination(req.params.page,req.params.amount);
     repository.getAllTasks(forPagination.last,forPagination.amount).then(data=>{
-      if(result[0].length===0){
+      if(data[0].length===0){
         return res.send({msg:'No tasks'});
+      }else{
+        repository.getCountOfAllTasks().then(result=>{
+          res.send([result[0][0],...data[0]]);
+        }).catch(err=>{
+          res.send({err})
+        });
       }
-      res.send(data);
     }).catch(err=>{
       res.send({err});
     });
@@ -23,7 +28,19 @@ class Controler{
       if(data[0].length===0){
         res.send({error:'This id does not exist'});
       }else{
-        res.send(data[0]);
+        if(data[0][0].task_owner!==parseInt(req.headers.iduser)){
+          service.checkStatus(req.headers.iduser).then(check=>{
+            if(check[0][0].permission==='admin'){
+              res.send(data[0]);
+            }else{
+              res.send({err:'You must be admin'});
+            }
+          }).catch(err=>{
+            res.send({err});
+          });
+        }else{
+          res.send(data[0]);
+        }
       }
     }).catch(err=>{
       res.send({err});
@@ -42,9 +59,8 @@ class Controler{
     });
   }
   backAllTasksTotaly(req,res,next){
-    const forPagination = service.pagination(req.params.page,req.params.amount);
-    repository.getAllTasks(forPagination.last,forPagination.amount).then(tasks=>{
-      repository.getAllDelTasks(forPagination.last,forPagination.amount).then(delTasks=>{
+    repository.getAllTasks().then(tasks=>{
+      repository.getAllDelTasks().then(delTasks=>{
         res.send({tasks:tasks[0].length!==0?tasks[0]:'Nothing',delTasks:delTasks[0].length!==0?delTasks[0]:'Nothing'});
       }).catch(err=>{
         res.send({err});
@@ -111,9 +127,8 @@ class Controler{
     if(!validationResult(req).isEmpty()){
       return res.send({error:validationResult(req).array()});
     }
-    const forPagination = service.pagination(req.params.page,req.params.amount);
-    repository.getUserTasks(req.params.idUser,forPagination.last,forPagination.amount).then(tasks=>{
-      repository.getUserDelTasks(req.params.idUser,forPagination.last,forPagination.amount).then(delTasks=>{
+    repository.getUserTasks(req.params.idUser).then(tasks=>{
+      repository.getUserDelTasks(req.params.idUser).then(delTasks=>{
         res.send({tasks:tasks[0].length!==0?tasks[0]:'No tasks',delTasks:delTasks[0].length!==0?delTasks[0]:'No del tasks'});
       }).catch(err=>{
         res.send({err})
@@ -124,7 +139,7 @@ class Controler{
   }
   backAllUserTasksByDate(req,res,next){
     // validation was in middleware routes
-    repository.getTasksByDateForOneUser(req.params.whom,req.params.year,req.params.month).then(data=>{
+    repository.getTasksByDateForOneUser(req.headers.iduser,req.params.year,req.params.month).then(data=>{
       res.send(data[0].slice(0,-1));
     }).catch(err=>{
       res.send(err);

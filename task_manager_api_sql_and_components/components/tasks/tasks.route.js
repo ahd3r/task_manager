@@ -8,30 +8,32 @@ const valid = require('../../utils/middleware');
 const app = express();
 
 app.use(bodyParser.json());
+app.use(valid.checkAuth);
 
 
-app.get('/del/done/inpage=:amount&page=:page',[
+
+app.get('/del/done/page=:page&amount=:amount',[
   param('amount')
     .isNumeric().withMessage('Must be num'),
   param('page')
     .isNumeric().withMessage('Must be num')
 ],valid.isAdmin,controler.backDoneDelTasks);
 
-app.get('/del/inpage=:amount&page=:page',[
+app.get('/del/page=:page&amount=:amount',[
   param('amount')
     .isNumeric().withMessage('Must be num'),
   param('page')
     .isNumeric().withMessage('Must be num')
 ],valid.isAdmin,controler.backDelAllTasks);
 
-app.get('/done/inpage=:amount&page=:page',[
+app.get('/done/page=:page&amount=:amount',[
   param('amount')
     .isNumeric().withMessage('Must be num'),
   param('page')
     .isNumeric().withMessage('Must be num')
 ],valid.isAdmin,controler.backDoneTasks);
 
-app.get('/user/del/:idUser/inpage=:amount&page=:page',[
+app.get('/user/del/:idUser/page=:page&amount=:amount',[
   param('idUser')
     .isNumeric().withMessage('NaN'),
   param('amount')
@@ -40,16 +42,12 @@ app.get('/user/del/:idUser/inpage=:amount&page=:page',[
     .isNumeric().withMessage('Must be num')
 ],valid.checkExistingAccount,controler.backDelTasksForUser);
 
-app.get('/user/alltasks/:idUser/inpage=:amount&page=:page',[
+app.get('/user/alltasks/:idUser',[
   param('idUser')
-    .isNumeric().withMessage('NaN'),
-  param('amount')
-    .isNumeric().withMessage('Must be num'),
-  param('page')
-    .isNumeric().withMessage('Must be num')
+    .isNumeric().withMessage('NaN')
 ],valid.checkExistingAccount,controler.backAllTasksForUser);
 
-app.get('/user/:idUser/inpage=:amount&page=:page',[
+app.get('/user/:idUser/page=:page&amount=:amount',[
   param('idUser')
     .isNumeric().withMessage('NaN'),
   param('amount')
@@ -58,27 +56,9 @@ app.get('/user/:idUser/inpage=:amount&page=:page',[
     .isNumeric().withMessage('Must be num')
 ],valid.checkExistingAccount,controler.backTasksForUser);
 
-app.get('/alltasks/inpage=:amount&page=:page',[
-  param('amount')
-    .isNumeric().withMessage('Must be num'),
-  param('page')
-    .isNumeric().withMessage('Must be num')
-],valid.isAdmin,controler.backAllTasksTotaly);
+app.get('/alltasks',valid.isAdmin,controler.backAllTasksTotaly);
 
-app.get('/date/:year&:month&:whom',[
-  param('whom')
-    .custom(value=>{
-      if(value==='admin'){
-        return false;
-      }else{
-        return true;
-      }}).withMessage('For Admin')
-    .custom(value=>{
-      if(!/\D/.test(value)){
-        return false;
-      }else{
-        return true;
-      }}).withMessage('For User'),
+app.get('/date/:year&:month',[
   param('year')
     .isNumeric().withMessage('NaN')
     .custom(value=>{
@@ -96,20 +76,14 @@ app.get('/date/:year&:month&:whom',[
       }
     }).withMessage('Not a month')
 ],(req,res,next)=>{
-  if(validationResult(req).isEmpty()){
-    res.send({err:'Wrong param for request'});
-  }else if(validationResult(req).array().length===1){
-    if(validationResult(req).array()[0].msg==='For Admin'){
-      next();
-    }else if(validationResult(req).array()[0].msg==='For User'){
-      next('route');
-    }
+  if(!validationResult(req).isEmpty()){
+    return res.send({err:'Wrong param for request'});
   }else{
-    res.send({msg:'You see it bacause you have an error in month or year and you must check it. Not pay attention to error with admin or user, this one must be here',err:validationResult(req).array()});
+    next();
   }
-},valid.isAdmin,controler.backAllTasksByDate);
+},valid.relocatedForData,valid.isAdmin,controler.backAllTasksByDate);
 
-app.get('/date/:year&:month&:idUser',valid.checkExistingAccount,controler.backAllUserTasksByDate);
+app.get('/date/:year&:month',controler.backAllUserTasksByDate);
 
 app.post('/create',[
   body('call')
@@ -204,7 +178,7 @@ app.delete('/delete/:idTask',[
       }}).withMessage('It does not must to start from 0')
 ],controler.deleteTask);
 
-app.get('/inpage=:amount&page=:page',[
+app.get('/page=:page&amount=:amount',[
   param('amount')
     .isNumeric().withMessage('Must be num'),
   param('page')

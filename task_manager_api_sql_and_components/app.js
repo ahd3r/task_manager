@@ -4,7 +4,6 @@ const authRouters = require('./components/auth/auth.route');
 const tasksRouters = require('./components/tasks/tasks.route');
 const userRouters = require('./components/user/user.route');
 const error = require('./components/error/error.controler');
-const middleWare = require('./utils/middleware');
 
 const app = express();
 
@@ -16,8 +15,8 @@ app.use((req, res, next)=>{
 });
 
 app.use('/auth',authRouters);
-app.use('/tasks',middleWare.checkAuth,tasksRouters);
-app.use('/user',userRouters);
+app.use('/tasks',tasksRouters);
+app.use('/users',userRouters);
 
 app.use(error.error404);
 

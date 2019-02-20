@@ -9,7 +9,10 @@ class Controler{
       return res.send({err:validationResult(req).array()});
     }
     userRepository.getUserByEmail(req.body.email).then(data=>{
-      service.loginUser(data).then(data=>{
+      if(data[0].length===0){
+        return res.send({err:'This user does not exist'})
+      }
+      service.loginUser(data,req.body).then(data=>{
         res.set('authorization',data.authorization);
         res.set('iduser',data.iduser);
         res.send({jwt:data.authorization,user:data.user});

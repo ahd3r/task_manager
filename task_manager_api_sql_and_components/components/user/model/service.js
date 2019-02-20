@@ -4,11 +4,14 @@ const nodeMailer = require('nodemailer');
 
 const transport = nodeMailer.createTransport(sendGrid({
   auth:{
-    api_key:'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',
+    api_key:'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',
   }
 }));
 
 class Service{
+  validPagination(page,amount){
+    return {last:(page-1)*amount,amount}
+  }
   hashPassword(rawPassword){
     const p=hashed.hashSync(rawPassword,7);
     return p;
@@ -24,7 +27,7 @@ class Service{
   }
   createToken(){
     let text='';
-    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@!?<>,.|~[]{}()*&^#$+-*/";
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; //<>|[]{}()=_/*-+!@#$%^&*~|\/
     for (let i = 0; i < 40; i++){
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }

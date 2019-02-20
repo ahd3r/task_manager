@@ -11,8 +11,6 @@ app.use(bodyParser.json());
 
 
 
-app.get('/',validMiddle.checkAuth,validMiddle.isAdmin,controler.backUsers);
-
 app.get('/statuses',validMiddle.checkAuth,validMiddle.isAdmin,controler.backStatus);
 
 app.post('/create',[
@@ -51,15 +49,15 @@ app.get('/image/:idUser',[
     .isNumeric().withMessage('It must be num')
 ],validMiddle.checkAuth,validMiddle.checkExistingAccount,controler.backImage);
 
-app.get('/confirm/token/:confToken',[
+app.get('/token/confirm/:confToken',[
   param('confToken')
     .isLength({min:40,max:40}).withMessage('Wrong confirm token')
-],validMiddle.checkExistingAccountWithConfToken,);
+],controler.backUserByConfToken);
 
-app.get('/reset/token/:resetToken',[
+app.get('/token/reset/:resetToken',[
   param('resetToken')
     .isLength({min:40,max:40})
-],validMiddle.checkExistingAccountWithResetToken,);
+],controler.backUserByResetToken);
 
 app.patch('/confirm/:idUser',[
   param('idUser')
@@ -82,6 +80,23 @@ app.delete('/delete/:idUser',[
   param('idUser')
     .isNumeric().withMessage('NaN')
 ],validMiddle.checkAuth,validMiddle.checkExistingAccount,controler.deleteUser);
+
+app.get('/page=:page&amount=:amount',[
+  param('page')
+    .isNumeric().withMessage('Must be num')
+    .custom(value=>{
+      if(value>0){
+        return true
+      }
+    }).withMessage('Wrong'),
+  param('amount')
+    .isNumeric().withMessage('Must be num')
+    .custom(value=>{
+      if(value>0){
+        return true
+      }
+    }).withMessage('Wrong'),
+],validMiddle.checkAuth,validMiddle.isAdmin,controler.backUsers);
 
 app.get('/:idUser',[
   param('idUser')
