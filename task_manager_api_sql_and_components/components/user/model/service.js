@@ -4,7 +4,7 @@ const nodeMailer = require('nodemailer');
 
 const transport = nodeMailer.createTransport(sendGrid({
   auth:{
-    api_key:'no you have no it', // past new key
+	api_key:'no you have no it', // past new key
   }
 }));
 
