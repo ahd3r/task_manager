@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { body,param,validationResult } = require('express-validator/check');
+const { body,param } = require('express-validator/check');
 
 const controler = require('./task.controler');
 const valid = require('../../utils/middleware');
@@ -9,6 +9,7 @@ const app = express();
 
 app.use(bodyParser.json());
 app.use(valid.checkAuth);
+app.use(valid.checkValid);
 
 
 
@@ -56,7 +57,12 @@ app.get('/user/:idUser/page=:page&amount=:amount',[
     .isNumeric().withMessage('Must be num')
 ],valid.checkExistingAccount,controler.backTasksForUser);
 
-app.get('/alltasks',valid.isAdmin,controler.backAllTasksTotaly);
+app.get('/alltasks/page=:page&amount=:amount',[
+  param('amount')
+    .isNumeric().withMessage('Must be num'),
+  param('page')
+    .isNumeric().withMessage('Must be num')
+],valid.isAdmin,controler.backAllTasksTotaly);
 
 app.get('/date/:year&:month',[
   param('year')
@@ -75,13 +81,7 @@ app.get('/date/:year&:month',[
         return true;
       }
     }).withMessage('Not a month')
-],(req,res,next)=>{
-  if(!validationResult(req).isEmpty()){
-    return res.send({err:'Wrong param for request'});
-  }else{
-    next();
-  }
-},valid.relocatedForData,valid.isAdmin,controler.backAllTasksByDate);
+],valid.relocatedForData,valid.isAdmin,controler.backAllTasksByDate);
 
 app.get('/date/:year&:month',controler.backAllUserTasksByDate);
 
@@ -105,19 +105,9 @@ app.put('/edit/:idTask',[
       }else{
         return true;
       }}).withMessage('It does not must to start from 0')
-],controler.editTasks);
+],valid.checkTask,valid.checkTask,controler.editTasks);
 
-app.patch('/done/all/:idUser',[
-  param('idUser')
-    .isNumeric().withMessage('it must be number')
-    .custom(value=>{
-      if(/^0/.test(value)){
-        return false
-      }else{
-        return true
-      }
-    }).withMessage('It should not begin from 0')
-],valid.checkExistingAccount,controler.doneAllTasks);
+app.patch('/done/all/user',controler.doneAllTasks);
 
 app.patch('/done/:idTask',[
   param('idTask')
@@ -128,7 +118,7 @@ app.patch('/done/:idTask',[
       }else{
         return true;
       }}).withMessage('It does not must to start from 0')
-],controler.doneTask);
+],valid.checkTask,controler.doneTask);
 
 app.delete('/delete/some/',[
   body('arrOfId')
@@ -176,7 +166,7 @@ app.delete('/delete/:idTask',[
       if(!/^0/.test(value)){
         return true;
       }}).withMessage('It does not must to start from 0')
-],controler.deleteTask);
+],valid.checkTask,controler.deleteTask);
 
 app.get('/page=:page&amount=:amount',[
   param('amount')
@@ -188,7 +178,7 @@ app.get('/page=:page&amount=:amount',[
 app.get('/:idTask',[
   param('idTask')
     .isNumeric().withMessage('NaN')
-],controler.backTask);
+],valid.checkTask,controler.backTask);
 
 
 

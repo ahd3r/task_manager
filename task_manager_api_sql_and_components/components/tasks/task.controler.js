@@ -1,7 +1,6 @@
-const { validationResult } = require('express-validator/check');
-
 const service = require('./model/service');
 const repository = require('./model/repository');
+const valid = require('../../utils/middleware');
 
 class Controler{
   backTasks(req,res,next){
@@ -21,26 +20,11 @@ class Controler{
     });
   }
   backTask(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.getTask(req.params.idTask).then(data=>{
       if(data[0].length===0){
         res.send({error:'This id does not exist'});
       }else{
-        if(data[0][0].task_owner!==parseInt(req.headers.iduser)){
-          service.checkStatus(req.headers.iduser).then(check=>{
-            if(check[0][0].permission==='admin'){
-              res.send(data[0]);
-            }else{
-              res.send({err:'You must be admin'});
-            }
-          }).catch(err=>{
-            res.send({err});
-          });
-        }else{
-          res.send(data[0]);
-        }
+        res.send(data[0]);
       }
     }).catch(err=>{
       res.send({err});
@@ -49,11 +33,15 @@ class Controler{
   backDelAllTasks(req,res,next){
     const forPagination = service.pagination(req.params.page,req.params.amount);
     repository.getAllDelTasks(forPagination.last,forPagination.amount).then(data=>{
-      if(data[0].length===0){
-        res.send({msg:'Deleted tasks does not exist'});
-      }else{
-        res.send(data[0]);
-      }
+      repository.getCountOfAllDelTasks().then(result=>{
+        if(data[0].length===0){
+          res.send({msg:'Deleted tasks does not exist'});
+        }else{
+          res.send([result[0][0],...data[0]]);
+        }
+      }).catch(err=>{
+        res.send({err});
+      });
     }).catch(err=>{
       res.send({err});
     });
@@ -61,7 +49,13 @@ class Controler{
   backAllTasksTotaly(req,res,next){
     repository.getAllTasks().then(tasks=>{
       repository.getAllDelTasks().then(delTasks=>{
-        res.send({tasks:tasks[0].length!==0?tasks[0]:'Nothing',delTasks:delTasks[0].length!==0?delTasks[0]:'Nothing'});
+        if(tasks[0].length===0){
+          tasks[0]=[{msg:'No Tasks'}];
+        }
+        if(delTasks[0].length===0){
+          delTasks[0]=[{msg:'No Tasks'}];
+        }
+        res.send([...tasks[0],...delTasks[0]]);
       }).catch(err=>{
         res.send({err});
       });
@@ -70,8 +64,7 @@ class Controler{
     });
   }
   backDoneTasks(req,res,next){
-    const forPagination = service.pagination(req.params.page,req.params.amount);
-    repository.getAllDoneTasks(forPagination.last,forPagination.amount).then(data=>{
+    repository.getAllDoneTasks().then(data=>{
       if(data[0].length===0){
         res.send({msg:'Does not exist'});
       }else{
@@ -82,8 +75,7 @@ class Controler{
     });
   }
   backDoneDelTasks(req,res,next){
-    const forPagination = service.pagination(req.params.page,req.params.amount);
-    repository.getAllDoneDelTasks(forPagination.amount,forPagination.amount).then(data=>{
+    repository.getAllDoneDelTasks().then(data=>{
       if(data[0].length===0){
         res.send({msg:'Does not exist'});
       }else{
@@ -94,9 +86,6 @@ class Controler{
     });
   }
   backTasksForUser(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const forPagination = service.pagination(req.params.page,req.params.amount);
     repository.getUserTasks(req.params.idUser,forPagination.last,forPagination.amount).then(data=>{
       if(data[0].length===0){
@@ -109,9 +98,6 @@ class Controler{
     });
   }
   backDelTasksForUser(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const forPagination = service.pagination(req.params.page,req.params.amount);
     repository.getUserDelTasks(req.params.idUser,forPagination.last,forPagination.amount).then(data=>{
       if(data[0].length===0){
@@ -124,12 +110,15 @@ class Controler{
     });
   }
   backAllTasksForUser(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.getUserTasks(req.params.idUser).then(tasks=>{
       repository.getUserDelTasks(req.params.idUser).then(delTasks=>{
-        res.send({tasks:tasks[0].length!==0?tasks[0]:'No tasks',delTasks:delTasks[0].length!==0?delTasks[0]:'No del tasks'});
+        if(tasks[0].length===0){
+          tasks[0]=[{msg:'No Tasks'}];
+        }
+        if(delTasks[0].length===0){
+          delTasks[0]=[{msg:'No Tasks'}];
+        }
+        res.send([...tasks[0],...delTasks[0]]);
       }).catch(err=>{
         res.send({err})
       });
@@ -154,9 +143,6 @@ class Controler{
     });
   }
   createTasks(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const dataForNewTask={call:req.body.call,creator:req.headers.iduser};
     const forPagination = service.pagination(1,5);
     repository.createTask(dataForNewTask).then(done=>{
@@ -170,18 +156,11 @@ class Controler{
     });
   }
   editTasks(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const forPagination = service.pagination(1,5);
     const editedDataOfTasks = {call:req.body.call,id:req.params.idTask};
     repository.editTask(editedDataOfTasks).then(done=>{
-      repository.getTask(editedDataOfTasks.id).then(data=>{
-        repository.getUserTasks(data[0][0].task_owner,forPagination.last,forPagination.amount).then(result=>{
-          res.send(result[0]);
-        }).catch(err=>{
-          res.send({err});
-        });
+      repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
+        res.send(result[0]);
       }).catch(err=>{
         res.send({err});
       });
@@ -190,17 +169,10 @@ class Controler{
     });
   }
   doneTask(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const forPagination = service.pagination(1,5);
     repository.doneTask(req.params.idTask).then(done=>{
-      repository.getTask(req.params.idTask).then(data=>{
-        repository.getUserTasks(data[0][0].task_owner,forPagination.last,forPagination.amount).then(result=>{
-          res.send(result[0]);
-        }).catch(err=>{
-          res.send({err});
-        });
+      repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
+        res.send(result[0]);
       }).catch(err=>{
         res.send({err});
       });
@@ -209,16 +181,13 @@ class Controler{
     });
   }
   doneAllTasks(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const forPagination = service.pagination(1,5);
-    repository.getUserUndoneTasks(req.params.idUser).then(data=>{
+    repository.getUserUndoneTasks(req.headers.iduser).then(data=>{
       if(data[0].length!==0){
         data[0].forEach((eachTask,index)=>{
           if(data[0].length===index+1){
             repository.doneTask(eachTask.id_task).then(done=>{
-              repository.getUserTasks(req.params.idUser,forPagination.last,forPagination.amount).then(result=>{
+              repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
                 res.send(result[0]);
               }).catch(err=>{
                 res.send({err});
@@ -239,65 +208,57 @@ class Controler{
   }
   // Just move tasks to delTasks table in db
   deleteTask(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const forPagination = service.pagination(1,5);
-    repository.getTask(req.params.idTask).then(firstData=>{
-      if(firstData[0].length===0){
-        return res.send({error:'This task does not exist'});
-      }
-      repository.deleteTask(firstData[0][0].id_task).then(done=>{
-        repository.getUserTasks(firstData[0][0].task_owner,forPagination.last,forPagination.amount).then(result=>{
-          if(result[0].length===0){
-            return res.send({msg:'No tasks'});
-          }
+    repository.deleteTask(req.params.idTask).then(done=>{
+      repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
+        if(result[0].length===0){
+          return res.send({msg:'No tasks'});
+        }else{
           res.send(result[0]);
-        }).catch(err=>{
-          res.send({err});
-        });
+        }
       }).catch(err=>{
         res.send({err});
       });
-    }).catch((err)=>{
-      res.sent({err});
+    }).catch(err=>{
+      res.send({err});
     });
   }
   deleteSomeTasks(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const forPagination = service.pagination(1,5);
     req.body.arrOfId.forEach((elem,ind)=>{
-      if(req.body.arrOfId.length===ind+1){
-        repository.getTask(elem).then(data=>{
-          if(data[0].length===0){
-            return res.send({msg:'No tasks, this array is wrong'});
-          }
-          repository.deleteTask(elem).then(done=>{
-            repository.getUserTasks(data[0][0].task_owner,forPagination.last,forPagination.amount).then(result=>{
-              if(result[0].length===0){
-                return res.send({msg:'No tasks'});
+      repository.getTask(elem).then(data=>{
+        if(data[0][0].task_owner!==req.headers.iduser){
+          valid.checkStatus(req.headers.iduser).then(data=>{
+            if(data[0][0].permission!=='admin'){
+              return res.send({err:'You must be admin'});
+            }else{
+              if(req.body.arrOfId.length===ind+1){
+                repository.deleteTask(elem).then(done=>{
+                  repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
+                    if(result[0].length===0){
+                      return res.send({msg:'No tasks'});
+                    }
+                    res.send(result[0]);
+                  }).catch(err=>{
+                    res.send({err});
+                  });
+                }).catch(err=>{
+                  res.send({err});
+                });
+              }else{
+                repository.deleteTask(elem);
               }
-              res.send(result[0]);
-            }).catch(err=>{
-              res.send({err});
-            });
+            }
           }).catch(err=>{
             res.send({err});
-          });  
-        }).catch(err=>{
-          res.send({err});
-        });
-      }else{
-        repository.deleteTask(elem);
-      }
+          });
+        }
+      }).catch(err=>{
+        res.send({err})
+      });
     });
   }
   deleteDoneUserTasks(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const forPagination = service.pagination(1,5);
     repository.getUserDoneTasks(req.params.idUser).then(data=>{
       if(data[0].length===0){
@@ -309,8 +270,9 @@ class Controler{
             repository.getUserTasks(req.params.idUser,forPagination.last,forPagination.amount).then(result=>{
               if(result[0].length===0){
                 return res.send({msg:'No tasks'});
+              }else{
+                res.send(result[0]);
               }
-              res.send(result[0]);
             }).catch(err=>{
               res.send({err});
             });
@@ -326,9 +288,6 @@ class Controler{
     });
   }
   deleteAllUserTasks(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.getUserTasks(req.params.idUser).then(data=>{
       if(data[0].length===0){
         return res.send({msg:'No tasks'});
@@ -356,12 +315,13 @@ class Controler{
       const forPagination = service.pagination(1,5);
       data[0].forEach((elem,ind)=>{
         if(ind+1===data[0].length){
-          repository.deleteTask(elem.id_task).then(data=>{
+          repository.deleteTask(elem.id_task).then(done=>{
             repository.getAllTasks(forPagination.last,forPagination.amount).then(data=>{
               if(data[0].length===0){
                 res.send({msg:'No tasks'});
+              }else{
+                res.send(data[0]);
               }
-              res.send(data[0]);
             }).catch(err=>{
               res.send({err});
             });

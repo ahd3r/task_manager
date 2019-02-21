@@ -1,9 +1,17 @@
 const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator/check');
 
 const userRepository = require('../components/user/model/repository');
 const tasksRepository = require('../components/tasks/model/repository');
 
 class ValidationInMiddleWare{
+  checkValid(req,res,next){
+    if(!validationResult(req).isEmpty()){
+      return res.send({error:validationResult(req).array()});
+    }else{
+      next();
+    }
+  }
   validConfToken(token){
     return userRepository.getUserByConfToken(token);
     // .then(data=>{
@@ -138,6 +146,25 @@ class ValidationInMiddleWare{
   }
   checkStatus(idUser){
     return userRepository.takeStatus(idUser);
+  }
+  checkTask(req,res,next){
+    tasksRepository.getTask(req.params.idTask).then(data=>{
+      if(data[0][0].task_owner===parseInt(req.headers.iduser)){
+        next();
+      }else{
+        userRepository.takeStatus(req.headers.iduser).then(data=>{
+          if(data[0][0].permission==='admin'){
+            next();
+          }else{
+            res.send({err:'You are not admin'});
+          }
+        }).catch(err=>{
+          res.send({err});
+        });
+      }
+    }).catch(err=>{
+      res.send({err})
+    });
   }
   relocatedForData(req,res,next){
     userRepository.takeStatus(req.headers.iduser).then(data=>{

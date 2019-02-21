@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const { body } = require('express-validator/check');
 
 const controler = require('./auth.controler');
+const { checkValid } = require('../../utils/middleware');
 
 const app = express();
 
@@ -13,6 +14,6 @@ app.get('/login', [
     .isEmail().withMessage('Write valid email'),
   body('password')
     .isLength({ min:8 }).withMessage('Password too short')
-], controler.backJwt);
+],checkValid,controler.backJwt);
 
 module.exports = app;

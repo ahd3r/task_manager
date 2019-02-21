@@ -2,13 +2,10 @@ const { validationResult } = require('express-validator/check');
 
 const service = require('./model/service');
 const repository = require('./model/repository');
-const forTwoMethod = require('../../utils/middleware');
+const valid = require('../../utils/middleware');
 
 class Controler{
   backUsers(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const forPagination = service.validPagination(req.params.page,req.params.amount);
     repository.getUsers(forPagination.last,forPagination.amount).then(data=>{
       repository.getCountOfAllUsers().then(totalyCount=>{
@@ -21,9 +18,6 @@ class Controler{
     });
   }
   backUser(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.getUser(req.params.idUser).then(data=>{
       res.send(data[0]);
     }).catch(err=>{
@@ -31,9 +25,6 @@ class Controler{
     });
   }
   backUserByConfToken(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.getUserByConfToken(req.params.confToken).then(data=>{
       if(data[0].length!==0){
         res.send(data[0]);
@@ -45,9 +36,6 @@ class Controler{
     });
   }
   backUserByResetToken(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.getUserByResetToken(req.params.resetToken).then(data=>{
       if(data[0].length!==0){
         res.send(data[0]);
@@ -59,47 +47,52 @@ class Controler{
     });
   }
   createAccount(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
+    const create = ()=>{
+      do {
+        req.body.tokenConfirm=service.createToken();
+        valid.validConfToken(req.body.tokenConfirm).then(data=>{
+          if(data[0].length!==0){
+            req.body.tokenConfirm='using';
+          }
+        }).catch(err=>{
+          return res.send({err});
+        });
+      } while (req.body.tokenConfirm==='using');
+      console.log('create');
+      req.body.password=service.hashPassword(req.body.password);
+      repository.createAccount(req.body).then(done=>{
+        repository.getUserByEmail(req.body.email).then(data=>{
+          service.sendingMail(req.body.email,'Confirm account',`
+            <h1>This is confirm letter</h1>
+            <p>For confirm it go to this link in postman with patch request:
+            http://localhost:3000/user/confirm/${data[0][0].id_user}</p>
+          `);
+          res.send(data[0]);
+        }).catch(err=>{
+          res.send({err});
+        });
+      }).catch(err=>{
+        res.send({err});
+      });
+    };
     if(req.body.permission){
       if(!req.headers.iduser){
         return res.send({err:'You must be authorized admin'});
       }
-      if(service.checkStatus(repository,req.headers.iduser)){
-        return res.send({err:service.checkStatus(repository,req.headers.iduser)});
-      }
-    }
-    do {
-      req.body.tokenConfirm=service.createToken();
-      forTwoMethod.validConfToken(req.body.tokenConfirm).then(data=>{
-        if(data[0].length!==0){
-          req.body.tokenConfirm='using';
+      valid.checkStatus(req.headers.iduser).then(data=>{
+        if(data[0][0].permission!=='admin'){
+          return res.send({err:'You must be admin'});
+        }else{
+          create();
         }
-      }).catch(err=>{
-        return res.send({err});
-      });
-    } while (req.body.tokenConfirm==='using');
-    req.body.password=service.hashPassword(req.body.password);
-    repository.createAccount(req.body).then(done=>{
-      repository.getUserByEmail(req.body.email).then(data=>{
-        service.sendingMail(req.body.email,'Confirm account',`
-          <h1>This is confirm letter</h1>
-          <p>For confirm it go to this link in postman with patch request:
-          http://localhost:3000/user/confirm/${data[0][0].id_user}</p>
-        `);
-        res.send(data[0]);
       }).catch(err=>{
         res.send({err});
       });
-    }).catch(err=>{
-      res.send({err});
-    });
+    }else{
+      create();
+    }
   }
   createStatus(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.addStatus(req.body).then(done=>{
       repository.backStatuses().then(data=>{
         res.send(data[0]);
@@ -111,9 +104,6 @@ class Controler{
     });
   }
   backUserStatus(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.takeStatus(req.params.idUser).then(data=>{
       res.send(data[0]);
     }).catch(err=>{
@@ -128,9 +118,6 @@ class Controler{
     });
   }
   createImage(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.addImage(req.body).then(done=>{
       res.send({done});
     }).catch(err=>{
@@ -138,9 +125,6 @@ class Controler{
     });
   }
   backImage(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.takeImage(req.params.idUser).then(data=>{
       res.send(data[0]);
     }).catch(err=>{
@@ -148,9 +132,6 @@ class Controler{
     });
   }
   confirmAccount(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     repository.confirmUser(req.params.idUser).then(done=>{
       repository.getUser(req.params.idUser).then(data=>{
         res.send(data[0]);
@@ -162,9 +143,6 @@ class Controler{
     });
   }
   resetPassworAccount(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const hashedPassword = service.hashPassword(req.body.password);
     repository.editUser({hashedPassword},req.params.idUser).then(done=>{
       repository.getUser(req.params.idUser).then(data=>{
@@ -210,7 +188,7 @@ class Controler{
     }else if(req.body.tokenReset&&req.body.tokenReset===1){
       do {
         req.body.tokenReset=service.createToken();
-        forTwoMethod.validResetToken(req.body.tokenReset).then(data=>{
+        valid.validResetToken(req.body.tokenReset).then(data=>{
           if(data[0].length!==0){
             req.body.tokenReset='using';
           }
@@ -255,9 +233,6 @@ class Controler{
     }
   }
   deleteUser(req,res,next){
-    if(!validationResult(req).isEmpty()){
-      return res.send({error:validationResult(req).array()});
-    }
     const deleteIt = ()=>{
       repository.deleteUser(req.params.idUser).then(done=>{
         res.send({done});

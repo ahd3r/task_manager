@@ -8,6 +8,7 @@ const validMiddle = require('../../utils/middleware');
 const app = express();
 
 app.use(bodyParser.json());
+app.use(validMiddle.checkValid);
 
 
 

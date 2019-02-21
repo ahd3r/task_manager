@@ -4,7 +4,7 @@ const nodeMailer = require('nodemailer');
 
 const transport = nodeMailer.createTransport(sendGrid({
   auth:{
-    api_key:'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',
+    api_key:'no you have no it', // past new key
   }
 }));
 
@@ -15,15 +15,6 @@ class Service{
   hashPassword(rawPassword){
     const p=hashed.hashSync(rawPassword,7);
     return p;
-  }
-  checkStatus(repository,idUser){
-    repository.takeStatus(idUser).then(data=>{
-      if(data[0][0].permission !== 'admin'){
-        return 'You can not create this type of user'
-      }
-    }).catch(err=>{
-      return err;
-    });
   }
   createToken(){
     let text='';

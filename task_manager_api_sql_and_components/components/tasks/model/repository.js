@@ -3,9 +3,9 @@ const db = require('../../../utils/database');
 class Repository{
   getAllTasks(last,amount){
     if(amount){
-      return db.execute(`SELECT * FROM tasks LIMIT ${last},${amount}`);
+      return db.execute(`SELECT * FROM tasks ORDER BY id_task LIMIT ${last},${amount}`);
     }else{
-      return db.execute(`SELECT * FROM tasks`);
+      return db.execute(`SELECT * FROM tasks ORDER BY id_task`);
     }
   }
   getCountOfAllTasks(){
@@ -13,7 +13,7 @@ class Repository{
   }
   getAllDelTasks(last,amount){
     if(amount){
-      return db.execute(`SELECT * FROM del_tasks LIMIT ${last},${amount}`);
+      return db.execute(`SELECT * FROM del_tasks ORDER BY id_del_task LIMIT ${last},${amount}`);
     }else{
       return db.execute(`SELECT * FROM del_tasks`);
     }
@@ -22,37 +22,45 @@ class Repository{
     return db.execute('SELECT COUNT(*) AS total FROM del_tasks');
   }
   getTask(idTask){
-    return db.execute(`SELECT * FROM tasks WHERE id_task=${idTask}`);
+    return db.execute(`SELECT * FROM tasks WHERE id_task=${idTask} ORDER BY id_task`);
   }
-  getAllDoneTasks(last,amount){
-    return db.execute(`SELECT * FROM tasks WHERE NOT task_done=0 LIMIT ${last},${amount};SELECT COUNT(*) AS total FROM FROM tasks WHERE NOT task_done=0`);
+  getAllDoneTasks(){
+    return db.execute(`SELECT * FROM tasks WHERE NOT task_done=0 ORDER BY id_task`); //  LIMIT ${last},${amount}
   }
-  getAllDoneDelTasks(last,amount){
-    return db.execute(`SELECT * FROM del_tasks WHERE NOT del_task_done=0 LIMIT ${last},${amount};SELECT COUNT(*) AS total FROM del_tasks WHERE NOT del_task_done=0`);
+  getCountOfAllDoneTasks(){
+    return db.execute('SELECT COUNT(*) AS total FROM FROM tasks WHERE NOT task_done=0');
+  }
+  getAllDoneDelTasks(){
+    return db.execute(`SELECT * FROM del_tasks WHERE NOT del_task_done=0 ORDER BY id_del_task`); //  LIMIT ${last},${amount}
   }
   getUserTasks(idUser,last,amount){
     if(amount){
-      return db.execute(`SELECT * FROM tasks WHERE task_owner = ${idUser} LIMIT ${last},${amount};SELECT COUNT(*) FROM tasks WHERE task_owner = ${idUser}`);
+      return db.execute(`SELECT * FROM tasks WHERE task_owner = ${idUser} ORDER BY id_task LIMIT ${last},${amount}`);
     }else{
-      return db.execute(`SELECT * FROM tasks WHERE task_owner = ${idUser}`);
+      return db.execute(`SELECT * FROM tasks WHERE task_owner = ${idUser} ORDER BY id_task`);
     }
+  }
+  getCountOfUserTasks(idUser){
+    return db.execute(`SELECT COUNT(*) FROM tasks WHERE task_owner = ${idUser}`);
   }
   getUserDelTasks(idUser,last,amount){
     if(amount){
-      return db.execute(`SELECT * FROM del_tasks WHERE user_deleted = ${idUser} LIMIT ${last},${amount};SELECT COUNT(*) FROM del_tasks WHERE user_deleted = ${idUser}`);
+      return db.execute(`SELECT * FROM del_tasks WHERE user_deleted = ${idUser} ORDER BY id_del_task LIMIT ${last},${amount}`);
     }else{
-      return db.execute(`SELECT * FROM del_tasks WHERE user_deleted = ${idUser}`);
+      return db.execute(`SELECT * FROM del_tasks WHERE user_deleted = ${idUser} ORDER BY id_del_task`);
     }
   }
+  getCountOfUserDelTasks(idUser){
+    return db.execute(`SELECT COUNT(*) FROM del_tasks WHERE user_deleted = ${idUser}`);
+  }
   getUserUndoneTasks(idUser){
-    return db.execute(`SELECT * FROM tasks WHERE task_owner=${idUser} AND task_done=0`);
+    return db.execute(`SELECT * FROM tasks WHERE task_owner=${idUser} AND task_done=0 ORDER BY id_task`);
   }
   getUserDoneTasks(idUser){
-    return db.execute(`SELECT * FROM tasks WHERE task_owner=${idUser} AND NOT task_done=0`);
+    return db.execute(`SELECT * FROM tasks WHERE task_owner=${idUser} AND NOT task_done=0 ORDER BY id_task`);
   }
   // getUserAllTasks(idUser){}
   getTasksByDateForOneUser(idUser,year,month){
-    console.log(`CALL show_tasks_by_date(${idUser},${year},${month},0)`);
     return db.execute(`CALL show_tasks_by_date(${idUser},${year},${month},0)`);
   }
   getTasksByDateForAdmin(year,month){
