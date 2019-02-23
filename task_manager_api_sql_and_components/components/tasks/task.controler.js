@@ -55,7 +55,7 @@ class Controler{
         if(delTasks[0].length===0){
           delTasks[0]=[{msg:'No Tasks'}];
         }
-        res.send([...tasks[0],...delTasks[0]]);
+        res.send([{total:tasks[0].length+delTasks[0].length},...tasks[0],...delTasks[0]]);
       }).catch(err=>{
         res.send({err});
       });
@@ -91,7 +91,11 @@ class Controler{
       if(data[0].length===0){
         res.send({msg:'No tasks'});
       }else{
-        res.send(data[0]);
+        repository.getCountOfUserTasks(req.params.idUser).then(count=>{
+          res.send([count[0][0],...data[0]]);
+        }).catch(err=>{
+          res.send({err});
+        });
       }
     }).catch(err=>{
       res.send({err});
@@ -147,7 +151,11 @@ class Controler{
     const forPagination = service.pagination(1,5);
     repository.createTask(dataForNewTask).then(done=>{
       repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(data=>{
-        res.send(data[0]);
+        repository.getCountOfUserTasks(req.headers.iduser).then(count=>{
+          res.send([count[0][0],...data[0]]);
+        }).catch(err=>{
+          res.send({err});
+        });
       }).catch(err=>{
         res.send({err});
       });
@@ -227,34 +235,61 @@ class Controler{
     const forPagination = service.pagination(1,5);
     req.body.arrOfId.forEach((elem,ind)=>{
       repository.getTask(elem).then(data=>{
-        if(data[0][0].task_owner!==req.headers.iduser){
-          valid.checkStatus(req.headers.iduser).then(data=>{
-            if(data[0][0].permission!=='admin'){
-              return res.send({err:'You must be admin'});
-            }else{
-              if(req.body.arrOfId.length===ind+1){
-                repository.deleteTask(elem).then(done=>{
-                  repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
-                    if(result[0].length===0){
-                      return res.send({msg:'No tasks'});
-                    }
-                    res.send(result[0]);
+        if(req.body.arrOfId.length===ind+1){
+          if(data[0][0].task_owner===parseInt(req.headers.iduser)){
+            repository.deleteTask(elem).then(done=>{
+              repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(data=>{
+                repository.getCountOfUserTasks(req.headers.iduser).then(count=>{
+                  res.send([count[0][0],...data[0]]);
+                }).catch(err=>{
+                  res.send(err);
+                });
+              }).catch(err=>{
+                res.send({err})
+              });
+            }).catch(err=>{
+              res.send({err});
+            });
+          }else{
+            valid.checkStatus(req.headers.iduser).then(data=>{
+              if(data[0][0].permission==='admin'){
+                repository.deleteTask(elem).then(data=>{
+                  repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(data=>{
+                    repository.getCountOfUserTasks(req.headers.iduser).then(count=>{
+                      res.send([count[0][0],...data[0]]);
+                    }).catch(err=>{
+                      res.send(err);
+                    });
                   }).catch(err=>{
-                    res.send({err});
+                    res.send({err})
                   });
                 }).catch(err=>{
                   res.send({err});
                 });
               }else{
-                repository.deleteTask(elem);
+                res.send({err:'You are not admin'});
               }
-            }
-          }).catch(err=>{
-            res.send({err});
-          });
+            }).catch(err=>{
+              res.send({err});
+            });
+          }
+        }else{
+          if(data[0][0].task_owner===parseInt(req.headers.iduser)){
+            repository.deleteTask(elem);
+          }else{
+            valid.checkStatus(req.headers.iduser).then(data=>{
+              if(data[0][0].permission==='admin'){
+                repository.deleteTask(elem);
+              }else{
+                res.send({err:'You are not admin'});
+              }
+            }).catch(err=>{
+              res.send({err});
+            });
+          }
         }
       }).catch(err=>{
-        res.send({err})
+        res.send({err});
       });
     });
   }

@@ -8,7 +8,6 @@ const validMiddle = require('../../utils/middleware');
 const app = express();
 
 app.use(bodyParser.json());
-app.use(validMiddle.checkValid);
 
 
 
@@ -25,7 +24,15 @@ app.post('/create',[
         return true
       }
     }).withMessage('Username must be fill')
-],controler.createAccount);
+],validMiddle.checkValid,(req,res,next)=>{
+  if(req.body.permission){
+    next('route');
+  }else{
+    next();
+  }
+},controler.createAccount);
+
+app.post('/create',validMiddle.isAdmin,controler.createAccount);
 
 app.post('/create/perm',[
   body('call').custom(value=>{
@@ -33,76 +40,79 @@ app.post('/create/perm',[
       return true
     }
   }).withMessage('Call must be fill')
-],validMiddle.checkAuth,validMiddle.isAdmin,controler.createStatus);
+],validMiddle.checkValid,validMiddle.checkAuth,validMiddle.isAdmin,controler.createStatus);
 
 app.get('/status/:idUser',[
   param('idUser')
     .isNumeric().withMessage('Must be a number')
-],validMiddle.checkAuth,validMiddle.checkExistingAccount,controler.backUserStatus);
+],validMiddle.checkValid,validMiddle.checkAuth,validMiddle.checkExistingAccount,validMiddle.isYour,controler.backUserStatus);
 
 app.post('/create/image',[
   body('url')
     .matches(/^https:\/\/res.cloudinary.com\/dpacw4pua\/image\/upload\//).withMessage('It must be load to cloudnary and past a link here for save it in db')
-],validMiddle.checkAuth,controler.createImage);
+],validMiddle.checkValid,validMiddle.checkAuth,controler.createImage);
 
 app.get('/image/:idUser',[
   param('idUser')
     .isNumeric().withMessage('It must be num')
-],validMiddle.checkAuth,validMiddle.checkExistingAccount,controler.backImage);
+],validMiddle.checkValid,validMiddle.checkAuth,validMiddle.checkExistingAccount,controler.backImage);
 
 app.get('/token/confirm/:confToken',[
   param('confToken')
     .isLength({min:40,max:40}).withMessage('Wrong confirm token')
-],controler.backUserByConfToken);
+],validMiddle.checkValid,controler.backUserByConfToken);
 
 app.get('/token/reset/:resetToken',[
   param('resetToken')
     .isLength({min:40,max:40})
-],controler.backUserByResetToken);
+],validMiddle.checkValid,controler.backUserByResetToken);
 
 app.patch('/confirm/:idUser',[
   param('idUser')
     .isNumeric().withMessage('It must be num')
-],validMiddle.checkExistingAccount,controler.confirmAccount);
+],validMiddle.checkValid,validMiddle.checkExistingAccount,controler.confirmAccount);
 
 app.patch('/reset/password/:idUser',[
   param('idUser')
     .isNumeric().withMessage('It must be num'),
   body('password')
     .isLength({min:8}).withMessage('Min 8 symbol of password')
-],validMiddle.checkExistingAccount,controler.resetPassworAccount);
+],validMiddle.checkValid,validMiddle.checkExistingAccount,controler.resetPassworAccount);
+
+app.patch('/token/reset/add/:idUser',[
+  param('idUser')
+    .isNumeric().withMessage('It must be num')
+],validMiddle.checkValid,validMiddle.checkExistingAccount,controler.addTokenReset);
 
 app.put('/edit/:idUser',[
   param('idUser')
     .isNumeric().withMessage('NaN')
-],validMiddle.checkAuth,validMiddle.checkExistingAccount,controler.editUser);
+],validMiddle.checkValid,validMiddle.checkAuth,validMiddle.checkExistingAccount,(req,res,next)=>{
+  if(req.body.permission){
+    next('route');
+  }else{
+    next();
+  }
+},validMiddle.isYour,controler.editUser);
+
+app.put('/edit/:idUser',validMiddle.isAdmin,controler.editUser);
 
 app.delete('/delete/:idUser',[
   param('idUser')
     .isNumeric().withMessage('NaN')
-],validMiddle.checkAuth,validMiddle.checkExistingAccount,controler.deleteUser);
+],validMiddle.checkValid,validMiddle.checkAuth,validMiddle.checkExistingAccount,validMiddle.isYour,controler.deleteUser);
 
 app.get('/page=:page&amount=:amount',[
   param('page')
-    .isNumeric().withMessage('Must be num')
-    .custom(value=>{
-      if(value>0){
-        return true
-      }
-    }).withMessage('Wrong'),
+    .isNumeric().withMessage('Must be num'),
   param('amount')
-    .isNumeric().withMessage('Must be num')
-    .custom(value=>{
-      if(value>0){
-        return true
-      }
-    }).withMessage('Wrong'),
-],validMiddle.checkAuth,validMiddle.isAdmin,controler.backUsers);
+    .isNumeric().withMessage('Must be num'),
+],validMiddle.checkValid,validMiddle.checkAuth,validMiddle.isAdmin,controler.backUsers);
 
 app.get('/:idUser',[
   param('idUser')
     .isNumeric().withMessage('It must be number')
-],validMiddle.checkAuth,validMiddle.checkExistingAccount,controler.backUser);
+],validMiddle.checkValid,validMiddle.checkAuth,validMiddle.checkExistingAccount,controler.backUser);
 
 
 

@@ -3,8 +3,24 @@ const { validationResult } = require('express-validator/check');
 
 const userRepository = require('../components/user/model/repository');
 const tasksRepository = require('../components/tasks/model/repository');
+const supportRepository = require('../components/support/model/repository');
 
 class ValidationInMiddleWare{
+  isYour(req,res,next){ // if route not only for admin but also for user
+    if(req.params.idUser===req.headers.iduser){
+      next();
+    }else{
+      userRepository.takeStatus(req.headers.iduser).then(data=>{
+        if(data[0][0].permission==='admin'){
+          next();
+        }else{
+          res.send({err:'You must be an admin'});
+        }
+      }).catch(err=>{
+        res.send({err});
+      });
+    }
+  }
   checkValid(req,res,next){
     if(!validationResult(req).isEmpty()){
       return res.send({error:validationResult(req).array()});
@@ -14,27 +30,12 @@ class ValidationInMiddleWare{
   }
   validConfToken(token){
     return userRepository.getUserByConfToken(token);
-    // .then(data=>{
-    //   if(data[0].length===0){
-    //     return token;
-    //   }else{
-    //     return 'using'
-    //   }
-    // }).catch(err=>{
-    //   return {err};
-    // });
   }
   validResetToken(token){
     return userRepository.getUserByResetToken(token);
-    // .then(data=>{
-    //   if(data[0].length!==0){
-    //     return token;
-    //   }else{
-    //     return 'using'
-    //   }
-    // }).catch(err=>{
-    //   return {err}
-    // })
+  }
+  checkStatus(idUser){
+    return userRepository.takeStatus(idUser);
   }
   checkExistingAccount(req,res,next){
     userRepository.getUser(req.params.idUser).then(data=>{
@@ -49,7 +50,6 @@ class ValidationInMiddleWare{
   }
   isUser(req,res,next){
     if(req.headers.iduser){
-      req.headers.iduser=parseInt(req.headers.iduser);
       userRepository.takeStatus(req.headers.iduser).then(data=>{
         if(data[0][0].permission==='user'){
           next();
@@ -65,7 +65,6 @@ class ValidationInMiddleWare{
   }
   isAdmin(req,res,next){
     if(req.headers.iduser){
-      req.headers.iduser=parseInt(req.headers.iduser);
       userRepository.takeStatus(req.headers.iduser).then(data=>{
         if(data[0][0].permission==='admin'){
           next();
@@ -81,14 +80,13 @@ class ValidationInMiddleWare{
   }
   isPaid(req,res,next){
     if(req.headers.iduser){
-      req.headers.iduser=parseInt(req.headers.iduser);
       tasksRepository.getUserTasks(req.headers.iduser).then(data=>{
-        if(data[0].length>5){
+        if(data[0].length>=5){
           userRepository.takeStatus(req.headers.iduser).then(data=>{
             if(data[0][0].permission==='paid'){
               next();
             }else{
-              res.send({err:'You are not paid user'});
+              res.send({err:'You are not paid user, for get status paid, you must to say it to admin by support tab, because I dunno how to set paid system for this'});
             }
           }).catch(err=>{
             res.send({err});
@@ -144,8 +142,16 @@ class ValidationInMiddleWare{
       res.send({err:'Render auth page'});
     }
   }
-  checkStatus(idUser){
-    return userRepository.takeStatus(idUser);
+  checkSupportMsg(req,res,next){
+    supportRepository.getMessage(req.params.idMessage).then(data=>{
+      if(data[0].length===0){
+        res.send({err:'This task does not exist'});
+      }else{
+        next();
+      }
+    }).catch(err=>{
+      res.send({err});
+    });
   }
   checkTask(req,res,next){
     tasksRepository.getTask(req.params.idTask).then(data=>{
@@ -166,7 +172,7 @@ class ValidationInMiddleWare{
       res.send({err})
     });
   }
-  relocatedForData(req,res,next){
+  relocatedForDate(req,res,next){
     userRepository.takeStatus(req.headers.iduser).then(data=>{
       if(data[0][0].permission==='admin'){
         next();

@@ -41,7 +41,7 @@ class Repository{
     }
   }
   getCountOfUserTasks(idUser){
-    return db.execute(`SELECT COUNT(*) FROM tasks WHERE task_owner = ${idUser}`);
+    return db.execute(`SELECT COUNT(*) AS total FROM tasks WHERE task_owner = ${idUser}`);
   }
   getUserDelTasks(idUser,last,amount){
     if(amount){

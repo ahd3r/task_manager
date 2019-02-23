@@ -3,6 +3,7 @@ const express = require('express');
 const authRouters = require('./components/auth/auth.route');
 const tasksRouters = require('./components/tasks/tasks.route');
 const userRouters = require('./components/user/user.route');
+const supportRouters = require('./components/support/support.route');
 const error = require('./components/error/error.controler');
 
 const app = express();
@@ -17,6 +18,7 @@ app.use((req, res, next)=>{
 app.use('/auth',authRouters);
 app.use('/tasks',tasksRouters);
 app.use('/users',userRouters);
+app.use('/support',supportRouters);
 
 app.use(error.error404);
 

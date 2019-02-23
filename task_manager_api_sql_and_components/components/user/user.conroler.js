@@ -47,50 +47,31 @@ class Controler{
     });
   }
   createAccount(req,res,next){
-    const create = ()=>{
-      do {
-        req.body.tokenConfirm=service.createToken();
-        valid.validConfToken(req.body.tokenConfirm).then(data=>{
-          if(data[0].length!==0){
-            req.body.tokenConfirm='using';
-          }
-        }).catch(err=>{
-          return res.send({err});
-        });
-      } while (req.body.tokenConfirm==='using');
-      console.log('create');
-      req.body.password=service.hashPassword(req.body.password);
-      repository.createAccount(req.body).then(done=>{
-        repository.getUserByEmail(req.body.email).then(data=>{
-          service.sendingMail(req.body.email,'Confirm account',`
-            <h1>This is confirm letter</h1>
-            <p>For confirm it go to this link in postman with patch request:
-            http://localhost:3000/user/confirm/${data[0][0].id_user}</p>
-          `);
-          res.send(data[0]);
-        }).catch(err=>{
-          res.send({err});
-        });
-      }).catch(err=>{
-        res.send({err});
-      });
-    };
-    if(req.body.permission){
-      if(!req.headers.iduser){
-        return res.send({err:'You must be authorized admin'});
-      }
-      valid.checkStatus(req.headers.iduser).then(data=>{
-        if(data[0][0].permission!=='admin'){
-          return res.send({err:'You must be admin'});
-        }else{
-          create();
+    do {
+      req.body.tokenConfirm=service.createToken();
+      valid.validConfToken(req.body.tokenConfirm).then(data=>{
+        if(data[0].length!==0){
+          req.body.tokenConfirm='using';
         }
       }).catch(err=>{
+        return res.send({err});
+      });
+    } while (req.body.tokenConfirm==='using');
+    req.body.password=service.hashPassword(req.body.password);
+    repository.createAccount(req.body).then(done=>{
+      repository.getUserByEmail(req.body.email).then(data=>{
+        service.sendingMail(req.body.email,'Confirm account',`
+          <h1>This is confirm letter</h1>
+          <p>For confirm it go to this link in postman with patch request:
+          http://localhost:3000/users/confirm/${data[0][0].id_user}</p>
+        `);
+        res.send(data[0]);
+      }).catch(err=>{
         res.send({err});
       });
-    }else{
-      create();
-    }
+    }).catch(err=>{
+      res.send({err});
+    });
   }
   createStatus(req,res,next){
     repository.addStatus(req.body).then(done=>{
@@ -154,8 +135,33 @@ class Controler{
       res.send({err});
     });
   }
+  addTokenReset(req,res,next){
+    do {
+      req.body.tokenReset=service.createToken();
+      valid.validResetToken(req.body.tokenReset).then(data=>{
+        if(data[0].length!==0){
+          req.body.tokenReset='using';
+        }
+      }).catch(err=>{
+        return res.send({err});
+      });
+    } while (req.body.tokenReset==='using');
+    repository.editUser({tokenReset:req.body.tokenReset},req.params.idUser).then(done=>{
+      repository.getUser(req.params.idUser).then(data=>{
+        service.sendingMail(data[0][0].email,'Reset password',`
+          <h1>This is letter for reset password</h1>
+          <p>For reset password go to this link http://localhost:3000/users/reset/password/${req.params.idUser} in postman 
+          with patch request and do not forget to past new password in body in password line</p>
+        `);
+        res.send(data[0]);
+      }).catch(err=>{
+        res.send({err});
+      })
+    }).catch(err=>{
+      res.send({err});
+    });
+  }
   editUser(req,res,next){
-    let doWeNeedSendEmail=false;
     if(!validationResult(req).isEmpty()){
       return res.send({error:validationResult(req).array()});
     }
@@ -179,80 +185,28 @@ class Controler{
       if(/\D/.test(req.body.permission)){
         return res.send({err:'It must be a number'});
       }
-      if(service.checkStatus(repository,req.headers.iduser)){
-        return res.send({err:service.checkStatus(repository,req.headers.iduser)});
-      }
     }
     if(req.body.tokenReset===0){
       req.body.tokenReset=null;
-    }else if(req.body.tokenReset&&req.body.tokenReset===1){
-      do {
-        req.body.tokenReset=service.createToken();
-        valid.validResetToken(req.body.tokenReset).then(data=>{
-          if(data[0].length!==0){
-            req.body.tokenReset='using';
-          }
-        }).catch(err=>{
-          return res.send({err});
-        });
-      } while (req.body.tokenReset==='using');
-      doWeNeedSendEmail=true;
-    }else if(req.body.tokenReset){
-      return res.send({err:'tokenReset must be either 1 or 0'});
+    }else if(req.body.tokenReset&&req.body.tokenReset!==0){
+      return res.send({err:'tokenReset must be either 0 or nothing'});
     }
-    const editIt=()=>{
-      repository.editUser(req.body,req.params.idUser).then(done=>{
-        repository.getUser(req.params.idUser).then(data=>{
-          if(doWeNeedSendEmail){
-            service.sendingMail(data[0][0].email,'Reset password',`
-              <h1>This is letter for reset password</h1>
-              <p>For reset password go to this link http://localhost:3000/users/reset/password/${data[0][0].id_user} in postman 
-              with patch request and do not forget to past new password in body in password line</p>
-            `);
-          }
-          res.send(data[0]);
-        }).catch(err=>{
-          res.send({err});
-        })
+    repository.editUser(req.body,req.params.idUser).then(done=>{
+      repository.getUser(req.params.idUser).then(data=>{
+        res.send(data[0]);
       }).catch(err=>{
         res.send({err});
-      });
-    };
-    if(req.headers.iduser!==req.params.idUser){
-      repository.takeStatus(req.headers.iduser).then(data=>{
-        if(data[0][0].permission!=='admin'){
-          return res.send({err:'You must be an admin'});
-        }else{
-          editIt();
-        }
-      }).catch(err=>{
-        res.send({err});
-      });
-    }else{
-      editIt();
-    }
+      })
+    }).catch(err=>{
+      res.send({err});
+    });
   }
   deleteUser(req,res,next){
-    const deleteIt = ()=>{
-      repository.deleteUser(req.params.idUser).then(done=>{
-        res.send({done});
-      }).catch(err=>{
-        res.send({err});
-      });
-    };
-    if(req.headers.iduser!==req.params.idUser){
-      repository.takeStatus(req.headers.iduser).then(data=>{
-        if(data[0][0].permission!=='admin'){
-          return res.send({err:'You must be an admin'});
-        }else{
-          deleteIt();
-        }
-      }).catch(err=>{
-        return res.send({err});
-      });
-    }else{
-      deleteIt();
-    }
+    repository.deleteUser(req.params.idUser).then(done=>{
+      res.send({done});
+    }).catch(err=>{
+      res.send({err});
+    });
   }
 }
 

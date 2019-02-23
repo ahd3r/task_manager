@@ -60,6 +60,20 @@ FOREIGN KEY (user_deleted) REFERENCES users(id_user) ON DELETE CASCADE ON UPDATE
 
 CREATE TRIGGER set_delete_time BEFORE INSERT ON del_tasks FOR EACH ROW SET NEW.deleted_time = CURRENT_DATE();
 
+CREATE TABLE support_message(
+id_message INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY UNIQUE,
+title VARCHAR(100) NOT NULL,
+body TEXT NOT NULL,
+message_status VARCHAR(100) NOT NULL DEFAULT 'Open',
+created DATE NOT NULL,
+updated DATE NOT NULL,
+creator INT UNSIGNED NOT NULL,
+readed TINYINT NOT NULL DEFAULT 0,
+FOREIGN KEY (creator) REFERENCES users(id_user) ON DELETE NO ACTION ON UPDATE CASCADE);
+
+CREATE TRIGGER set_created_time BEFORE INSERT ON support_message FOR EACH ROW SET NEW.created = CURRENT_DATE();
+CREATE TRIGGER set_updated_time BEFORE UPDATE ON support_message FOR EACH ROW SET NEW.updated = CURRENT_DATE();
+
 delimiter //
 CREATE PROCEDURE delete_task(id_task_not_del_for_del INT UNSIGNED)
 BEGIN
@@ -127,7 +141,7 @@ delimiter ;
 
 
 
-INSERT status_perm(permission) VALUES ('user'),('admin'); -- create paid user by route
+INSERT status_perm(permission) VALUES ('user'),('admin'),('paid');
 SELECT * FROM status_perm;
 
 INSERT image(image_url) VALUES('https://res.cloudinary.com/dpacw4pua/image/upload/v1549307344/task_manager/avatar/user.png');
