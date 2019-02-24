@@ -132,11 +132,19 @@ class Controler{
   }
   backAllUserTasksByDate(req,res,next){
     // validation was in middleware routes
-    repository.getTasksByDateForOneUser(req.headers.iduser,req.params.year,req.params.month,req.params.day).then(data=>{
-      res.send(data[0].slice(0,-1));
-    }).catch(err=>{
-      res.send(err);
-    });
+    if(req.params.idUser){
+      repository.getTasksByDateForOneUser(req.params.idUser,req.params.year,req.params.month,req.params.day).then(data=>{
+        res.send(data[0].slice(0,-1));
+      }).catch(err=>{
+        res.send(err);
+      });
+    }else{
+      repository.getTasksByDateForOneUser(req.headers.iduser,req.params.year,req.params.month,req.params.day).then(data=>{
+        res.send(data[0].slice(0,-1));
+      }).catch(err=>{
+        res.send(err);
+      });
+    }
   }
   backAllTasksByDate(req,res,next){
     // validation was in middleware routes
