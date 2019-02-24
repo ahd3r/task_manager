@@ -14,6 +14,29 @@ class Controler{
       res.send({err});
     });
   }
+  getMsgByTitle(req,res,next){
+    repository.getMessagesByTitle(req.body.searchByTitle).then(data=>{
+      if(data[0].length===0){
+        res.send({err:'Messages was not found'});
+      }else{
+        res.send([{total:data[0].length},...data[0]]);
+      }
+    }).catch(err=>{
+      res.send({err});
+    });
+  }
+  getUnreadMessage(req,res,next){
+    const forPagination = service.pagination(req.param.page,req.param.amount);
+    repository.getUnreadMessages(forPagination.last,forPagination.amount).then(data=>{
+      repository.getCountOfUnreadMessages().then(count=>{
+        res.send([count[0][0],...data[0]]);
+      }).catch(err=>{
+        res.send({err});
+      });
+    }).catch(err=>{
+      res.send({err})
+    });
+  }
   createMessage(req,res,next){
     const forPagination = service.pagination(1,5);
     repository.createMessage(req.body,req.headers.iduser).then(done=>{

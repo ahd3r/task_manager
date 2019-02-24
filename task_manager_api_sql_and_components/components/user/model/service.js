@@ -12,6 +12,9 @@ class Service{
   validPagination(page,amount){
     return {last:(page-1)*amount,amount}
   }
+  comparePass(rawPass,hashedPass){
+    return hashed.compareSync(rawPass,hashedPass);
+  }
   hashPassword(rawPassword){
     const p=hashed.hashSync(rawPassword,7);
     return p;

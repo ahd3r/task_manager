@@ -88,7 +88,7 @@ app.get('/date/:year&:month&:user',[
     }).withMessage('Last must be equel 1')
 ],valid.checkValid,controler.backAllUserTasksByDate);
 
-app.get('/date/:year&:month',[
+app.get('/date/:year&:month&:day',[
   param('year')
     .isNumeric().withMessage('NaN')
     .custom(value=>{
@@ -104,10 +104,16 @@ app.get('/date/:year&:month',[
       if(value<=12 && value>=1){
         return true;
       }
-    }).withMessage('Not a month')
+    }).withMessage('Not a month'),
+  param('day')
+    .custom(value=>{
+      if(value>0 && value<32){
+        return true;
+      }
+    }).withMessage('Not a day')
 ],valid.checkValid,valid.relocatedForDate,controler.backAllTasksByDate);
 
-app.get('/date/:year&:month',controler.backAllUserTasksByDate);
+app.get('/date/:year&:month&:day',controler.backAllUserTasksByDate);
 
 app.post('/create',[
   body('call')

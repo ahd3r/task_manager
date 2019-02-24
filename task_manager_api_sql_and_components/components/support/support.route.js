@@ -21,6 +21,18 @@ app.get('/user/:idUser/page=:page&amount=:amount',[
     .isNumeric().withMessage('Must be num')
 ],valid.checkValid,valid.isYour,controler.getUserMessages);
 
+app.get('/search',[
+  body('searchByTitle')
+    .isEmpty().withMessage('Must be fill')
+],valid.checkValid,valid.isAdmin,controler.getMsgByTitle);
+
+app.get('/unread/page=:page&amount=:amount',[
+  param('page')
+    .isNumeric().withMessage('Must be num'),
+  param('amount')
+    .isNumeric().withMessage('Must be num')
+],valid.checkValid,valid.isAdmin,controler.getUnreadMessage);
+
 app.post('/create',[
   body('title')
     .isEmpty().withMessage('It must be fill'),

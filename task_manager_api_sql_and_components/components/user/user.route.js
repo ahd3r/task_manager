@@ -32,6 +32,11 @@ app.post('/create',[
   }
 },controler.createAccount);
 
+app.get('/search',[
+  body('searchByName')
+    .isEmpty().withMessage('Must be fill')
+],validMiddle.checkValid,validMiddle.checkAuth,validMiddle.isAdmin,controler.backUsersByUsername);
+
 app.post('/create',validMiddle.isAdmin,controler.createAccount);
 
 app.post('/create/perm',[
@@ -77,7 +82,7 @@ app.patch('/reset/password/:idUser',[
     .isNumeric().withMessage('It must be num'),
   body('password')
     .isLength({min:8}).withMessage('Min 8 symbol of password')
-],validMiddle.checkValid,validMiddle.checkExistingAccount,controler.resetPassworAccount);
+],validMiddle.checkValid,validMiddle.checkExistingAccount,controler.checkCurPass,controler.resetPassworAccount);
 
 app.patch('/token/reset/add/:idUser',[
   param('idUser')

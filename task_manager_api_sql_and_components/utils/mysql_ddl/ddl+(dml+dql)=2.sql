@@ -91,46 +91,46 @@ END//
 delimiter ;
 
 delimiter //
-CREATE PROCEDURE show_tasks_by_date(user_for INT UNSIGNED, year_t SMALLINT UNSIGNED,month_t TINYINT UNSIGNED, admin_s TINYINT(1))
+CREATE PROCEDURE show_tasks_by_date(user_for INT UNSIGNED, year_t SMALLINT UNSIGNED,month_t TINYINT UNSIGNED, day_t TINYINT UNSIGNED,admin_s TINYINT(1))
 BEGIN
 	IF(admin_s=0)
 	THEN
 		IF EXISTS(SELECT * FROM users WHERE id_user = user_for)
 		THEN
-			IF EXISTS(SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t AND task_owner=user_for)
+			IF EXISTS(SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t AND DAY(task_created)=day_t AND task_owner=user_for)
 			THEN
-				IF EXISTS(SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND user_deleted=user_for)
+				IF EXISTS(SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND DAY(created_time)=day_t AND user_deleted=user_for)
 				THEN
-					SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t AND task_owner=user_for ORDER BY id_task DESC;
-					SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND user_deleted=user_for ORDER BY id_del_task DESC;
+					SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t AND DAY(task_created)=day_t AND task_owner=user_for ORDER BY id_task DESC;
+					SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND DAY(created_time)=day_t AND user_deleted=user_for ORDER BY id_del_task DESC;
 				ELSE
-					SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t AND task_owner=user_for ORDER BY id_task DESC;
+					SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t AND DAY(task_created)=day_t AND task_owner=user_for ORDER BY id_task DESC;
 				END IF;
 			ELSE
-				IF EXISTS(SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND user_deleted=user_for)
+				IF EXISTS(SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND DAY(created_time)=day_t AND user_deleted=user_for)
 				THEN
-					SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND user_deleted=user_for ORDER BY id_del_task DESC;
+					SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND DAY(created_time)=day_t AND user_deleted=user_for ORDER BY id_del_task DESC;
 				ELSE
-					SELECT 'This user has no tasks' AS Error;
+					SELECT 'This user has no tasks at this day' AS Error;
 				END IF;
 			END IF;
 		ELSE
 			SELECT 'Wrong id' AS Error;
 		END IF;
 	ELSE
-		IF EXISTS(SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t)
+		IF EXISTS(SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t AND DAY(task_created)=day_t)
         THEN
-            IF EXISTS(SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t)
+            IF EXISTS(SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND DAY(created_time)=day_t)
             THEN
-				SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t ORDER BY id_task DESC;
-				SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t ORDER BY id_del_task DESC;
+				SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t AND DAY(task_created)=day_t ORDER BY id_task DESC;
+				SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND DAY(created_time)=day_t ORDER BY id_del_task DESC;
 			ELSE
-				SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t ORDER BY id_task DESC;
+				SELECT * FROM tasks WHERE YEAR(task_created)=year_t AND MONTH(task_created)=month_t AND DAY(task_created)=day_t ORDER BY id_task DESC;
 			END IF;
 		ELSE
-			IF EXISTS(SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t)
+			IF EXISTS(SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND DAY(created_time)=day_t)
             THEN
-				SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t ORDER BY id_del_task DESC;
+				SELECT * FROM del_tasks WHERE YEAR(created_time)=year_t AND MONTH(created_time)=month_t AND DAY(created_time)=day_t ORDER BY id_del_task DESC;
             ELSE
 				SELECT 'In this date was not be any task' AS Message;
             END IF;

@@ -60,11 +60,11 @@ class Repository{
     return db.execute(`SELECT * FROM tasks WHERE task_owner=${idUser} AND NOT task_done=0 ORDER BY id_task`);
   }
   // getUserAllTasks(idUser){}
-  getTasksByDateForOneUser(idUser,year,month){
-    return db.execute(`CALL show_tasks_by_date(${idUser},${year},${month},0)`);
+  getTasksByDateForOneUser(idUser,year,month,day){
+    return db.execute(`CALL show_tasks_by_date(${idUser},${year},${month},${day},0)`);
   }
-  getTasksByDateForAdmin(year,month){
-    return db.execute(`CALL show_tasks_by_date(1,${year},${month},1)`);
+  getTasksByDateForAdmin(year,month,day){
+    return db.execute(`CALL show_tasks_by_date(1,${year},${month},${day},1)`);
   }
   createTask(newTaskData){
     return db.execute(`INSERT tasks(task_name,task_owner) VALUES ('${newTaskData.call}',${newTaskData.creator})`);

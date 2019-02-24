@@ -4,6 +4,15 @@ class Repository{
   getMessages(last,amount){
     return db.execute(`SELECT * FROM support_message LIMIT ${last},${amount} ORDER BY id_message DESC`);
   }
+  getUnreadMessages(last,amount){
+    return db.execute(`SELECT * FROM support_message WHERE readed=0 LIMIT ${last},${amount} ORDER BY id_message DESC`);
+  }
+  getCountOfUnreadMessages(){
+    return db.execute('SELECT COUNT(*) AS total FROM support_message WHERE readed=0');
+  }
+  getMessagesByTitle(title){
+    return db.execute(`SELECT * FROM support_message WHERE title LIKE '%${title}%' ORDER BY id_message DESC`);
+  }
   getCountOfMessage(){
     return db.execute('SELECT COUNT(*) AS total FROM support_message');
   }

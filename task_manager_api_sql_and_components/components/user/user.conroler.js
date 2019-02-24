@@ -24,6 +24,17 @@ class Controler{
       res.send({err});
     });
   }
+  backUsersByUsername(req,res,next){
+    repository.getUsersByName(req.body.searchByName).then(data=>{
+      if(data[0].length===0){
+        res.send({err:'User was not found'});
+      }else{
+        res.send([{total:data[0].length},...data[0]]);
+      }
+    }).catch(err=>{
+      res.send({err});
+    });
+  }
   backUserByConfToken(req,res,next){
     repository.getUserByConfToken(req.params.confToken).then(data=>{
       if(data[0].length!==0){
@@ -122,6 +133,23 @@ class Controler{
     }).catch(err=>{
       res.send({err});
     });
+  }
+  checkCurPass(req,res,next){
+    if(req.body.curPass===''){
+      res.send({err:'Password are not match'});
+    }else if(req.body.curPass){
+      repository.getUser(req.params.idUser).then(data=>{
+        if(service.comparePass(req.body.curPass,data[0][0].password)){
+          next();
+        }else{
+          res.send({err:'Password are not match'});
+        }
+      }).catch(err=>{
+        res.send({err});
+      });
+    }else{
+      next();
+    }
   }
   resetPassworAccount(req,res,next){
     const hashedPassword = service.hashPassword(req.body.password);
