@@ -71,11 +71,7 @@ class Controler{
     req.body.password=service.hashPassword(req.body.password);
     repository.createAccount(req.body).then(done=>{
       repository.getUserByEmail(req.body.email).then(data=>{
-        service.sendingMail(req.body.email,'Confirm account',`
-          <h1>This is confirm letter</h1>
-          <p>For confirm it go to this link in postman with patch request:
-          http://localhost:3000/users/confirm/${data[0][0].id_user}</p>
-        `);
+        service.sendingMail(req.body.email,'Confirm account',req.body.htmlBody);
         res.send(data[0]);
       }).catch(err=>{
         res.send({err});

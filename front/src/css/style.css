@@ -1,11 +1,10 @@
-.title{
-  font-size: 30px;
-  font-style: italic;
-}
-.myalert{
-  position: absolute;
-}
 #main{
-  background: rgb(190, 190, 190);
-  border-radius: 10px;
+  background: green;
+  border-radius: 20px;
+}
+a:hover{
+  cursor: pointer;
+}
+#ava{
+  border-radius: 50%;
 }

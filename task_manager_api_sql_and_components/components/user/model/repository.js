@@ -8,8 +8,8 @@ class Repository{
       return db.execute(`INSERT users(username,password,email,confirm_token) VALUES ('${newDataForAccount.username}','${newDataForAccount.password}','${newDataForAccount.email}','${newDataForAccount.tokenConfirm}')`);
     }
   }
-  getUsersByName(name){
-    return db.execute(`SELECT * FROM users WHERE username LIKE '%${name}%' ORDER BY id_user DESC`);
+  getUsersByNameOrEmail(search){
+    return db.execute(`SELECT * FROM users WHERE username LIKE '%${search}%' OR email LIKE '%${search}%' ORDER BY id_user DESC`);
   }
   getUsers(last,amount){
     return db.execute(`SELECT * FROM users LIMIT ${last},${amount} ORDER BY id_user DESC`);

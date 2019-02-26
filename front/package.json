@@ -4,7 +4,7 @@
   "description": "Front for my api",
   "main": "app.js",
   "scripts": {
-    "build":"webpack",
+    "build": "webpack",
     "start": "nodemon app.js"
   },
   "author": "Ander",

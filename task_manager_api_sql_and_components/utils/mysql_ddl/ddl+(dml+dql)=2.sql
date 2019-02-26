@@ -141,7 +141,7 @@ delimiter ;
 
 
 
-INSERT status_perm(permission) VALUES ('user'),('admin'),('paid');
+INSERT status_perm(permission) VALUES ('user'),('paid'),('admin');
 SELECT * FROM status_perm;
 
 INSERT image(image_url) VALUES('https://res.cloudinary.com/dpacw4pua/image/upload/v1549307344/task_manager/avatar/user.png');

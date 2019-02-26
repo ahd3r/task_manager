@@ -23,7 +23,9 @@ app.post('/create',[
       if(value){
         return true
       }
-    }).withMessage('Username must be fill')
+    }).withMessage('Username must be fill'),
+  body('htmlBody')
+    .isEmpty().withMessage('Must be fill')
 ],validMiddle.checkValid,(req,res,next)=>{
   if(req.body.permission){
     next('route');
@@ -32,12 +34,20 @@ app.post('/create',[
   }
 },controler.createAccount);
 
+app.post('/create',[
+  body('permission')
+    .isNumeric().withMessage('Must be num')
+    .custom(value=>{
+      if(value>0&&value<4){
+        return true;
+      }
+    }).withMessage('Only 1, 2 or 3')
+],validMiddle.checkValid,validMiddle.isAdmin,controler.createAccount);
+
 app.get('/search',[
   body('searchByName')
     .isEmpty().withMessage('Must be fill')
 ],validMiddle.checkValid,validMiddle.checkAuth,validMiddle.isAdmin,controler.backUsersByUsername);
-
-app.post('/create',validMiddle.isAdmin,controler.createAccount);
 
 app.post('/create/perm',[
   body('call').custom(value=>{

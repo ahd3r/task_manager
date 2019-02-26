@@ -1,20 +1,9 @@
-import { helpers } from './ui-helpers';
-import { btnUsersEvent } from './event-user-btn';
-import { btnTasksEvent } from './event-task-btn';
+import { help } from '../helpers/helper';
 
 class UI{
-  renderSupport(infoUser){
-    if(!document.querySelector('nav>.ava')){
-      helpers.renderNav(infoUser);
-    }
-    helpers.clearMain();
-  }
-  settingPageForAccount(){}
-  renderMainUserPage(){}
-  renderMainAdminPage(){}
-  renderAllUsersPageAdmin(){}
-  renderCalendarPageForUser(){}
-  renderCalendarPageForAdmin(){}
+  renderAdminMainPage(data){}
+  renderUserMainPage(data){}
+  renderAuthPage(){}
 }
 
 export const ui = new UI;
