@@ -1,11 +1,13 @@
 import { http } from './http';
 import { ui } from './ui/ui-main';
 
+import './css/style.css';
+
 const token = localStorage.getItem('token');
 const iduser = localStorage.getItem('iduser');
 
 if(token&&iduser){
-  http.get(`http://localhost:3000/user/${iduser}`).then(data=>{
+  http.get(`http://localhost:3000/users/${iduser}`, token).then(data=>{
     if(data[0].permission==='admin'){
       ui.renderAdminPage(data[0]);
     }else if(data[0].permission==='user'||data[0].permission==='paid'){

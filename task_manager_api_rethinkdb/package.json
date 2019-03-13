@@ -1,0 +1,9 @@
+{
+  "name": "task_manager_api_rethinkdb",
+  "version": "1.0.0",
+  "description": "API for task manager using rethinkdb for change db",
+  "main": "app.js",
+  "scripts": {},
+  "author": "Ander",
+  "license": "ISC"
+}

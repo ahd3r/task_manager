@@ -1,0 +1,26 @@
+{
+  "name": "task_manager_api",
+  "version": "1.0.0",
+  "description": "API for task manager build on sql (mysql)",
+  "main": "run_server.js",
+  "scripts": {
+    "start": "nodemon run_server.js",
+    "test": "jest --detectOpenHandles --forceExit"
+  },
+  "author": "Ander",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^3.0.4",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "express-validator": "^5.3.1",
+    "jest": "^24.3.1",
+    "jsonwebtoken": "^8.4.0",
+    "mysql2": "^1.6.4",
+    "nodemailer": "^5.1.1",
+    "nodemailer-sendgrid-transport": "^0.2.0",
+    "nodemon": "^1.18.9",
+    "socket.io": "^2.2.0",
+    "supertest": "^4.0.0"
+  }
+}
