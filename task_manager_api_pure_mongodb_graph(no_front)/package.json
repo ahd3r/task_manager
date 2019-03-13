@@ -1,0 +1,11 @@
+{
+  "name": "task_manager_api_pure_mongodb_graph",
+  "version": "1.0.0",
+  "description": "API for task manager based on pure mongodb and graphql",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ander",
+  "license": "ISC"
+}
