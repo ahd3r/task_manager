@@ -1,7 +1,7 @@
 class EasyHTTP{
-  async get(url, token){
-    if(token){
-      const request = await fetch(url, { headers:{'Content-type':'application/json'}, body:{authorizationToken:token} });
+  async get(url, data){
+    if(data){
+      const request = await fetch(url, { headers:{'Content-type':'application/json'}, body:data });
       const  response= await request.json();
       return response;
     }else{

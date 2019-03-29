@@ -1,5 +1,4 @@
 const app = require('./app');
+const io = require('./utils/socket');
 
-app.listen(3000,()=>{
-  console.log('API is runing...');
-});
+io.init(app.listen(3000,()=>{console.log('API is runing on 3000...')}));

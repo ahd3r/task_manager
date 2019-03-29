@@ -10,13 +10,11 @@ class Controler{
       if(data[0][0].confirm_token){
         return res.send({err:'You must to confirm'});
       }
-      service.loginUser(data,req.body).then(data=>{
-        res.set('authorization',data.authorization);
-        res.set('iduser',data.iduser);
-        res.send({jwt:data.authorization,user:data.user});
-      }).catch(err=>{
-        res.send({err});
-      });
+      return service.loginUser(data,req.body)
+    }).then(data=>{
+      res.set('authorization',data.authorization);
+      res.set('iduser',data.iduser);
+      res.send({jwt:data.authorization,user:data.user});
     }).catch(err=>{
       res.send({err});
     });

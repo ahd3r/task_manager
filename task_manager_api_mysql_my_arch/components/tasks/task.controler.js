@@ -5,16 +5,17 @@ const valid = require('../../utils/middleware');
 class Controler{
   backTasks(req,res,next){
     const forPagination=service.pagination(req.params.page,req.params.amount);
+    let resultForSend;
     repository.getAllTasks(forPagination.last,forPagination.amount).then(data=>{
       if(data[0].length===0){
         return res.send({msg:'No tasks'});
       }else{
-        repository.getCountOfAllTasks().then(result=>{
-          res.send([result[0][0],...data[0]]);
-        }).catch(err=>{
-          res.send({err})
-        });
+        resultForSend = [...data[0]];
+        return repository.getCountOfAllTasks()
       }
+    }).then(result=>{
+      resultForSend = [result[0][0],...resultForSend];
+      res.send(resultForSend);
     }).catch(err=>{
       res.send({err});
     });
@@ -32,33 +33,40 @@ class Controler{
   }
   backDelAllTasks(req,res,next){
     const forPagination = service.pagination(req.params.page,req.params.amount);
+    let sendIt;
     repository.getAllDelTasks(forPagination.last,forPagination.amount).then(data=>{
-      repository.getCountOfAllDelTasks().then(result=>{
-        if(data[0].length===0){
-          res.send({msg:'Deleted tasks does not exist'});
-        }else{
-          res.send([result[0][0],...data[0]]);
-        }
-      }).catch(err=>{
-        res.send({err});
-      });
+      if(data[0].length===0){
+        res.send({msg:'Deleted tasks does not exist'});
+      }else{
+        sendIt = [...data[0]];
+        return repository.getCountOfAllDelTasks();
+      }
+    }).then(result=>{
+      sendIt=[result[0][0],...sendIt];
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err});
     });
   }
   backAllTasksTotaly(req,res,next){
+    let sendIt=[];
+    let totalCountOfTasks=0;
     repository.getAllTasks().then(tasks=>{
-      repository.getAllDelTasks().then(delTasks=>{
-        if(tasks[0].length===0){
-          tasks[0]=[{msg:'No Tasks'}];
-        }
-        if(delTasks[0].length===0){
-          delTasks[0]=[{msg:'No Tasks'}];
-        }
-        res.send([{total:tasks[0].length+delTasks[0].length},...tasks[0],...delTasks[0]]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      totalCountOfTasks+=tasks[0].length;
+      if(tasks[0].length===0){
+        sendIt=[...sendIt,{msg:'No Tasks'}];
+      }else{
+        sendIt=[...sendIt,...tasks[0]];
+      }
+      return repository.getAllDelTasks()
+    }).then(delTasks=>{
+      totalCountOfTasks+=delTasks[0].length;
+      if(delTasks[0].length===0){
+        sendIt=[...sendIt,{msg:'No Del Tasks'}];
+      }else{
+        sendIt=[...sendIt,...delTasks[0]];
+      }
+      res.send([{total:totalCountOfTasks},...sendIt]);
     }).catch(err=>{
       res.send({err});
     });
@@ -86,17 +94,18 @@ class Controler{
     });
   }
   backTasksForUser(req,res,next){
+    let sendIt;
     const forPagination = service.pagination(req.params.page,req.params.amount);
     repository.getUserTasks(req.params.idUser,forPagination.last,forPagination.amount).then(data=>{
       if(data[0].length===0){
         res.send({msg:'No tasks'});
       }else{
-        repository.getCountOfUserTasks(req.params.idUser).then(count=>{
-          res.send([count[0][0],...data[0]]);
-        }).catch(err=>{
-          res.send({err});
-        });
+        sendIt=[...data[0]];
+        return repository.getCountOfUserTasks(req.params.idUser);
       }
+    }).then(count=>{
+      sendIt = [count[0][0],...sendIt]
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err});
     });
@@ -114,18 +123,24 @@ class Controler{
     });
   }
   backAllTasksForUser(req,res,next){
+    let sendIt=[];
+    let resCount = 0;
     repository.getUserTasks(req.params.idUser).then(tasks=>{
-      repository.getUserDelTasks(req.params.idUser).then(delTasks=>{
-        if(tasks[0].length===0){
-          tasks[0]=[{msg:'No Tasks'}];
-        }
-        if(delTasks[0].length===0){
-          delTasks[0]=[{msg:'No Tasks'}];
-        }
-        res.send([...tasks[0],...delTasks[0]]);
-      }).catch(err=>{
-        res.send({err})
-      });
+      resCount+=tasks[0].length;
+      if(tasks[0].length===0){
+        sendIt=[{msg:'No Tasks'},...sendIt];
+      }else{
+        sendIt=[...tasks[0],...sendIt];
+      }
+      return repository.getUserDelTasks(req.params.idUser)
+    }).then(delTasks=>{
+      resCount+=delTasks[0].length;
+      if(delTasks[0].length===0){
+        sendIt=[...sendIt,{msg:'No Del Tasks'}];
+      }else{
+        sendIt=[...sendIt,...delTasks[0]];
+      }
+      res.send([{total:resCount},...sendIt]);
     }).catch(err=>{
       res.send({err});
     });
@@ -157,16 +172,15 @@ class Controler{
   createTasks(req,res,next){
     const dataForNewTask={call:req.body.call,creator:req.headers.iduser};
     const forPagination = service.pagination(1,5);
+    let sendIt;
     repository.createTask(dataForNewTask).then(done=>{
-      repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(data=>{
-        repository.getCountOfUserTasks(req.headers.iduser).then(count=>{
-          res.send([count[0][0],...data[0]]);
-        }).catch(err=>{
-          res.send({err});
-        });
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount)
+    }).then(data=>{
+      sendIt = [...data[0]];
+      return repository.getCountOfUserTasks(req.headers.iduser)
+    }).then(count=>{
+      sendIt = [count[0][0],...sendIt];
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err});
     });
@@ -175,11 +189,9 @@ class Controler{
     const forPagination = service.pagination(1,5);
     const editedDataOfTasks = {call:req.body.call,id:req.params.idTask};
     repository.editTask(editedDataOfTasks).then(done=>{
-      repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
-        res.send(result[0]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount)
+    }).then(result=>{
+      res.send(result[0]);
     }).catch(err=>{
       res.send({err});
     });
@@ -187,11 +199,9 @@ class Controler{
   doneTask(req,res,next){
     const forPagination = service.pagination(1,5);
     repository.doneTask(req.params.idTask).then(done=>{
-      repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
-        res.send(result[0]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount)
+    }).then(result=>{
+      res.send(result[0]);
     }).catch(err=>{
       res.send({err});
     });
@@ -202,15 +212,7 @@ class Controler{
       if(data[0].length!==0){
         data[0].forEach((eachTask,index)=>{
           if(data[0].length===index+1){
-            repository.doneTask(eachTask.id_task).then(done=>{
-              repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
-                res.send(result[0]);
-              }).catch(err=>{
-                res.send({err});
-              });
-            }).catch(err=>{
-              res.send({err});
-            });
+            return repository.doneTask(eachTask.id_task)
           }else{
             repository.doneTask(eachTask.id_task);
           }
@@ -218,6 +220,10 @@ class Controler{
       }else{
         res.send({err:'NOPE'});
       }
+    }).then(done=>{
+      return repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount)
+    }).then(result=>{
+      res.send(result[0]);
     }).catch(err=>{
       res.send({err});
     });
@@ -226,15 +232,13 @@ class Controler{
   deleteTask(req,res,next){
     const forPagination = service.pagination(1,5);
     repository.deleteTask(req.params.idTask).then(done=>{
-      repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount).then(result=>{
-        if(result[0].length===0){
-          return res.send({msg:'No tasks'});
-        }else{
-          res.send(result[0]);
-        }
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getUserTasks(req.headers.iduser,forPagination.last,forPagination.amount)
+    }).then(result=>{
+      if(result[0].length===0){
+        return res.send({msg:'No tasks'});
+      }else{
+        res.send(result[0]);
+      }
     }).catch(err=>{
       res.send({err});
     });
@@ -309,23 +313,19 @@ class Controler{
       }
       data[0].forEach((elem,ind)=>{
         if(ind+1===data[0].length){
-          repository.deleteTask(elem.id_task).then(done=>{
-            repository.getUserTasks(req.params.idUser,forPagination.last,forPagination.amount).then(result=>{
-              if(result[0].length===0){
-                return res.send({msg:'No tasks'});
-              }else{
-                res.send(result[0]);
-              }
-            }).catch(err=>{
-              res.send({err});
-            });
-          }).catch(err=>{
-            res.send({err});
-          });
+          return repository.deleteTask(elem.id_task)
         }else{
           repository.deleteTask(elem.id_task);
         }
       });
+    }).then(done=>{
+      return repository.getUserTasks(req.params.idUser,forPagination.last,forPagination.amount)
+    }).then(result=>{
+      if(result[0].length===0){
+        return res.send({msg:'No tasks'});
+      }else{
+        res.send(result[0]);
+      }
     }).catch(err=>{
       res.send({err});
     });
@@ -337,44 +337,38 @@ class Controler{
       }
       data[0].forEach((elem,ind)=>{
         if(ind+1===data[0].length){
-          repository.deleteTask(elem.id_task).then(done=>{
-            res.send({msg:'No tasks'});
-          }).catch(err=>{
-            res.send({err});
-          });
+          return repository.deleteTask(elem.id_task)
         }else{
           repository.deleteTask(elem.id_task);
         }
       });
+    }).then(done=>{
+      res.send({msg:'No tasks'});
     }).catch(err=>{
       res.send({err});
     });
   }
   deleteAllDoneTasks(req,res,next){
+    const forPagination = service.pagination(1,5);
     repository.getAllDoneTasks().then(data=>{
       if(data[0].length===0){
         return res.send({msg:'This tasks does not exist'});
       }
-      const forPagination = service.pagination(1,5);
       data[0].forEach((elem,ind)=>{
         if(ind+1===data[0].length){
-          repository.deleteTask(elem.id_task).then(done=>{
-            repository.getAllTasks(forPagination.last,forPagination.amount).then(data=>{
-              if(data[0].length===0){
-                res.send({msg:'No tasks'});
-              }else{
-                res.send(data[0]);
-              }
-            }).catch(err=>{
-              res.send({err});
-            });
-          }).catch(err=>{
-            res.send({err});
-          });
+          return repository.deleteTask(elem.id_task);
         }else{
           repository.deleteTask(elem.id_task);
         }
       });
+    }).then(done=>{
+      repository.getAllTasks(forPagination.last,forPagination.amount)
+    }).then(data=>{
+      if(data[0].length===0){
+        res.send({msg:'No tasks'});
+      }else{
+        res.send(data[0]);
+      }
     }).catch(err=>{
       res.send({err});
     });
@@ -386,15 +380,13 @@ class Controler{
       }
       data[0].forEach((elem,ind)=>{
         if(ind+1===data[0].length){
-          repository.deleteTask(elem.id_task).then(done=>{
-            res.send({msg:'No tasks'});
-          }).catch(err=>{
-            res.send({err})
-          });
+          return repository.deleteTask(elem.id_task)
         }else{
           repository.deleteTask(elem.id_task);
         }
       });
+    }).then(done=>{
+      res.send({msg:'No tasks'});
     }).catch(err=>{
       res.send({err});
     });

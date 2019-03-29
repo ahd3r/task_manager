@@ -69,6 +69,8 @@ app.get('/token/reset/:resetToken',[
     .isLength({min:40,max:40})
 ],validMiddle.checkValid,controler.backUserByResetToken);
 
+// app.get('/current',validMiddle.checkAuth,controler.backCurUser);
+
 app.patch('/confirm/:idUser',[
   param('idUser')
     .isNumeric().withMessage('It must be num')

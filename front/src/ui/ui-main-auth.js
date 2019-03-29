@@ -1,9 +1,9 @@
 import { helpers } from './ui-helpers';
-import { btnUsersEvent } from './event-user-btn';
+import { btnUsersEvent } from './events/event-user-btn';
 
 class UI{
-  renderResetPassPage(){
-    // check key, which was pasted in url
+  renderResetPassPage(msg=null){
+    // check token, which was pasted in url
 
     helpers.renderNavForUnsignedUser();
     helpers.clearMain();
@@ -34,13 +34,35 @@ class UI{
     main.appendChild(resetForm);
 
     main.querySelector('.resetForm').addEventListener('submit',btnUsersEvent.resetPass);
+
+    if(msg){
+      helpers.renderAlert(msg,'grey');
+    }
   }
-  renderFillEmailForResetPass(){
+  renderFillEmailForResetPass(msg=null){
     helpers.renderNavForUnsignedUser();
     helpers.clearMain();
+
+    const email = document.createElement('input');
+    email.type='email';
+    email.className = 'form-control';
+    email.placeholder='Write an email for send you a letter';
+    const sendBtn = document.createElement('input');
+    sendBtn.type='submit';
+    sendBtn.className = 'btn btn-primary';
+    sendBtn.value='Send';
+    const formForEmail = document.createElement('form');
+    formForEmail.className='emailForm form-inline';
+    formForEmail.appendChild(email);
+    formForEmail.appendChild(sendBtn);
+    formForEmail.addEventListener('submit',btnUsersEvent.sendLetterToEmail);
+    document.querySelector('#main').appendChild(formForEmail);
+
+    if(msg){
+      helpers.renderAlert(msg,'grey');
+    }
   }
-  renderThanksForConfirm(){}
-  renderAuthPage(){
+  renderAuthPage(msg=null){
     helpers.renderNavForUnsignedUser();
     helpers.clearMain();
 
@@ -98,7 +120,11 @@ class UI{
     main.querySelector('.signupPlace').appendChild(signUpForm);
     main.querySelector('.login').addEventListener('submit',btnUsersEvent.loginUser);
     main.querySelector('.signup').addEventListener('submit',btnUsersEvent.createUser);
+
+    if(msg){
+      helpers.renderAlert(msg,'grey');
+    }
   }
 }
 
-export const ui = new UI;
+export const ui_auth = new UI;

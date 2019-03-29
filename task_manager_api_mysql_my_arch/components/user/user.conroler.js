@@ -7,18 +7,26 @@ const valid = require('../../utils/middleware');
 class Controler{
   backUsers(req,res,next){
     const forPagination = service.validPagination(req.params.page,req.params.amount);
+    let result;
     repository.getUsers(forPagination.last,forPagination.amount).then(data=>{
-      repository.getCountOfAllUsers().then(totalyCount=>{
-        res.send([totalyCount[0][0],...data[0]]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      result=[...data[0]];
+      return repository.getCountOfAllUsers()
+    }).then(totalyCount=>{
+      result=[totalyCount[0][0],...result];
+      res.send(result);
     }).catch(err=>{
       res.send({err});
     });
   }
   backUser(req,res,next){
     repository.getUser(req.params.idUser).then(data=>{
+      res.send(data[0]);
+    }).catch(err=>{
+      res.send({err});
+    });
+  }
+  backCurUser(req,res,next){
+    repository.getUser(req.headers.iduser).then(data=>{
       res.send(data[0]);
     }).catch(err=>{
       res.send({err});
@@ -70,27 +78,23 @@ class Controler{
     } while (req.body.tokenConfirm==='using');
     req.body.password=service.hashPassword(req.body.password);
     repository.createAccount(req.body).then(done=>{
-      repository.getUserByEmail(req.body.email).then(data=>{
-        service.sendingMail(req.body.email,'Confirm account',`
-          <h1>This is confirm letter</h1>
-          <p>For confirm it go to this link in postman with patch request:
-          http://localhost:3000/users/confirm/${data[0][0].id_user}</p>
-        `);
-        res.send(data[0]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getUserByEmail(req.body.email)
+    }).then(data=>{
+      service.sendingMail(req.body.email,'Confirm account',`
+        <h1>This is confirm letter</h1>
+        <p>For confirm it go to this link in postman with patch request:
+        http://localhost:3000/users/confirm/${data[0][0].id_user}</p>
+      `);
+      res.send(data[0]);
     }).catch(err=>{
       res.send({err});
     });
   }
   createStatus(req,res,next){
     repository.addStatus(req.body).then(done=>{
-      repository.backStatuses().then(data=>{
-        res.send(data[0]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.backStatuses()
+    }).then(data=>{
+      res.send(data[0]);
     }).catch(err=>{
       res.send({err});
     });
@@ -125,11 +129,9 @@ class Controler{
   }
   confirmAccount(req,res,next){
     repository.confirmUser(req.params.idUser).then(done=>{
-      repository.getUser(req.params.idUser).then(data=>{
-        res.send(data[0]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getUser(req.params.idUser)
+    }).then(data=>{
+      res.send(data[0]);
     }).catch(err=>{
       res.send({err});
     });
@@ -154,11 +156,9 @@ class Controler{
   resetPassworAccount(req,res,next){
     const hashedPassword = service.hashPassword(req.body.password);
     repository.editUser({hashedPassword},req.params.idUser).then(done=>{
-      repository.getUser(req.params.idUser).then(data=>{
-        res.send(data[0]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getUser(req.params.idUser)
+    }).then(data=>{
+      res.send(data[0]);
     }).catch(err=>{
       res.send({err});
     });
@@ -175,16 +175,14 @@ class Controler{
       });
     } while (req.body.tokenReset==='using');
     repository.editUser({tokenReset:req.body.tokenReset},req.params.idUser).then(done=>{
-      repository.getUser(req.params.idUser).then(data=>{
-        service.sendingMail(data[0][0].email,'Reset password',`
-          <h1>This is letter for reset password</h1>
-          <p>For reset password go to this link http://localhost:3000/users/reset/password/${req.params.idUser} in postman 
-          with patch request and do not forget to past new password in body in password line</p>
-        `);
-        res.send(data[0]);
-      }).catch(err=>{
-        res.send({err});
-      })
+      return repository.getUser(req.params.idUser);
+    }).then(data=>{
+      service.sendingMail(data[0][0].email,'Reset password',`
+        <h1>This is letter for reset password</h1>
+        <p>For reset password go to this link http://localhost:3000/users/reset/password/${req.params.idUser} in postman 
+        with patch request and do not forget to past new password in body in password line</p>
+      `);
+      res.send(data[0]);
     }).catch(err=>{
       res.send({err});
     });
@@ -220,11 +218,9 @@ class Controler{
       return res.send({err:'tokenReset must be either 0 or nothing'});
     }
     repository.editUser(req.body,req.params.idUser).then(done=>{
-      repository.getUser(req.params.idUser).then(data=>{
-        res.send(data[0]);
-      }).catch(err=>{
-        res.send({err});
-      })
+      return repository.getUser(req.params.idUser);
+    }).then(data=>{
+      res.send(data[0]);
     }).catch(err=>{
       res.send({err});
     });

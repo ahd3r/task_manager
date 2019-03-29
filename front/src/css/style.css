@@ -4,8 +4,14 @@
 }
 .myalert{
   position: absolute;
+  left: 50%;
+  top: 15%;
+  transform: translate(-50%);
 }
 #main{
   background: rgb(190, 190, 190);
   border-radius: 10px;
+}
+a:hover{
+  cursor: pointer;
 }

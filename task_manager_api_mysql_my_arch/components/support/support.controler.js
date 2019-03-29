@@ -1,15 +1,17 @@
 const repository = require('./model/repository');
 const service = require('./model/service');
+// const io = require('../../utils/socket');
 
 class Controler{
   getUserMessages(req,res,next){
+    let sendIt;
     const forPagination = service.pagination(req.params.page,req.params.amount);
     repository.getMessagesForUser(req.headers.iduser,forPagination.last,forPagination.amount).then(data=>{
-      repository.getCountOfMessageForUser().then(count=>{
-        res.send([count[0][0],...data[0]]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      sendIt = [...data[0]];
+      return repository.getCountOfMessageForUser();
+    }).then(count=>{
+      sendIt=[count[0][0],...sendIt]
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err});
     });
@@ -26,89 +28,87 @@ class Controler{
     });
   }
   getUnreadMessage(req,res,next){
+    let sendIt;
     const forPagination = service.pagination(req.param.page,req.param.amount);
     repository.getUnreadMessages(forPagination.last,forPagination.amount).then(data=>{
-      repository.getCountOfUnreadMessages().then(count=>{
-        res.send([count[0][0],...data[0]]);
-      }).catch(err=>{
-        res.send({err});
-      });
+      sendIt=[...data[0]];
+      return repository.getCountOfUnreadMessages();
+    }).then(count=>{
+      sendIt = [count[0][0],...sendIt];
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err})
     });
   }
   createMessage(req,res,next){
+    let sendIt;
     const forPagination = service.pagination(1,5);
     repository.createMessage(req.body,req.headers.iduser).then(done=>{
-      repository.getMessagesForUser(req.headers.iduser,forPagination.last,forPagination.amount).then(data=>{
-        repository.getCountOfMessageForUser().then(count=>{
-          res.send([count[0][0],...data[0]]);
-        }).catch(err=>{
-          res.send({err});
-        });
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getMessagesForUser(req.headers.iduser,forPagination.last,forPagination.amount);
+    }).then(data=>{
+      sendIt = [...data[0]];
+      return repository.getCountOfMessageForUser()
+    }).then(count=>{
+      sendIt = [count[0][0],...sendIt];
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err});
     });
   }
   readMessage(req,res,next){
+    let sendIt;
     const forPagination = service.pagination(1,5);
     repository.readMessage(req.params.idMessage).then(done=>{
-      repository.getMessagesForUser(req.headers.iduser,forPagination.last,forPagination.amount).then(data=>{
-        repository.getCountOfMessageForUser().then(count=>{
-          res.send([count[0][0],...data[0]]);
-        }).catch(err=>{
-          res.send({err});
-        });
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getMessagesForUser(req.headers.iduser,forPagination.last,forPagination.amount)
+    }).then(data=>{
+      sendIt=[...data[0]];
+      return repository.getCountOfMessageForUser()
+    }).then(count=>{
+      sendIt = [count[0][0],...sendIt];
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err});
     });
   }
   doneMessage(req,res,next){
+    let sendIt;
     const forPagination = service.pagination(1,5);
     repository.doneMessage(req.params.idMessage).then(done=>{
-      repository.getMessagesForUser(req.headers.iduser,forPagination.last,forPagination.amount).then(data=>{
-        repository.getCountOfMessageForUser().then(count=>{
-          res.send([count[0][0],...data[0]]);
-        }).catch(err=>{
-          res.send({err});
-        });
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getMessagesForUser(req.headers.iduser,forPagination.last,forPagination.amount)
+    }).then(data=>{
+      sendIt=[...data[0]];
+      return repository.getCountOfMessageForUser()
+    }).then(count=>{
+      sendIt=[count[0][0],...sendIt];
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err});
     });
   }
   deleteMessage(req,res,next){
+    let sendIt;
     const forPagination = service.pagination(1,5);
     repository.deleteMessage(req.params.idMessage).then(data=>{
-      repository.getMessagesForUser(req.headers.iduser,forPagination.last,forPagination.amount).then(data=>{
-        repository.getCountOfMessageForUser().then(count=>{
-          res.send([count[0][0],...data[0]]);
-        }).catch(err=>{
-          res.send({err});
-        });
-      }).catch(err=>{
-        res.send({err});
-      });
+      return repository.getMessagesForUser(req.headers.iduser,forPagination.last,forPagination.amount)
+    }).then(data=>{
+      sendIt=[...data[0]];
+      return repository.getCountOfMessageForUser()
+    }).then(count=>{
+      sendIt=[count[0][0],...sendIt];
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err});
     });
   }
   getMessages(req,res,next){
+    let sendIt;
     const forPagination = service.pagination(1,5);
     repository.getMessages(forPagination.last,forPagination.amount).then(data=>{
-      repository.getCountOfMessage().then(count=>{
-        res.send([count[0][0],...data[0]])
-      }).catch(err=>{
-        res.send({err});
-      });
+      sendIt=[...data[0]];
+      return repository.getCountOfMessage()
+    }).then(count=>{
+      sendIt=[count[0][0],...sendIt];
+      res.send(sendIt);
     }).catch(err=>{
       res.send({err});
     });
