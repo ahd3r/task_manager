@@ -1,1 +1,0 @@
-Right version of previous api (architecture), with postgres, graphql and better features and fewer bags and crutches. In api build by graphql, does not have a front.
