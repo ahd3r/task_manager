@@ -1,0 +1,11 @@
+{
+  "name": "task_manager_api_mysql",
+  "version": "1.0.0",
+  "description": "API base on mysql database",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ander",
+  "license": "ISC"
+}

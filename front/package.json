@@ -1,7 +1,7 @@
 {
   "name": "front",
   "version": "1.0.0",
-  "description": "Front for my api",
+  "description": "Front for one api",
   "main": "app.js",
   "scripts": {
     "build": "webpack && node app.js",
