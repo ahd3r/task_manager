@@ -21,6 +21,7 @@
     "nodemailer-sendgrid-transport": "^0.2.0",
     "nodemon": "^1.18.9",
     "socket.io": "^2.2.0",
-    "supertest": "^4.0.0"
+    "supertest": "^4.0.0",
+    "validator": "^10.11.0"
   }
 }
